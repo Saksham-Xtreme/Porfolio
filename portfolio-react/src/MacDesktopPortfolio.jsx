@@ -1084,21 +1084,27 @@ function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    console.log("Sending:", form);
+    try {
+      const API = import.meta.env.VITE_API_URL;
   
-    const res = await fetch("http://localhost:8000/api/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+      console.log("Sending:", form);
   
-    console.log("Status:", res.status);
+      const res = await fetch(`${API}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
   
-    const data = await res.json();
-    console.log("Response:", data);
+      console.log("Status:", res.status);
   
-    if (data.success) {
-      setSent(true);
+      const data = await res.json();
+      console.log("Response:", data);
+  
+      if (data.success) {
+        setSent(true);
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
     }
   };
   const inputStyle = {
