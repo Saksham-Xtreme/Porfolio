@@ -572,6 +572,66 @@ function ProfileCenter() {
             }}
           />
 
+          {/* CTA Buttons */}
+            <div
+              style={{
+                marginTop: 24,
+                display: "flex",
+                gap: 14,
+                alignItems: "center"
+              }}
+            >
+            
+              {/* GitHub */}
+              <motion.a
+                href="https://github.com/Saksham-Xtreme"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.96 }}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                  borderRadius: 10,
+                  background: "#24292e",
+                  color: "#fff",
+                  fontFamily: "'DM Sans', system-ui",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  textDecoration: "none",
+                  textAlign: "center",
+                  boxShadow: "0 6px 18px rgba(0,0,0,0.15)"
+                }}
+              >
+                GitHub
+              </motion.a>
+            
+              {/* LinkedIn */}
+              <motion.a
+                href="https://linkedin.com/in/saksham-tripathi-7b25b0330"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.96 }}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                  borderRadius: 10,
+                  background: "#0A66C2",
+                  color: "#fff",
+                  fontFamily: "'DM Sans', system-ui",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  textDecoration: "none",
+                  textAlign: "center",
+                  boxShadow: "0 6px 18px rgba(0,0,0,0.15)"
+                }}
+              >
+                LinkedIn
+              </motion.a>
+            
+            </div>
+
         </div>
 
       </div>
