@@ -567,7 +567,7 @@ function ProfileCenter() {
                 .pauseFor(200)
                 .typeString("<br/>Focused on production-grade engineering and security.")
                 .pauseFor(200)
-                .typeString("<br/>Solved 117+ LeetCode problems • Rating 1540.")
+                .typeString("<br/>Solved 120+ LeetCode problems • Rating 1540.")
                 .pauseFor(200)
                 .typeString("<br/>From New Delhi, India")
                 .start()
