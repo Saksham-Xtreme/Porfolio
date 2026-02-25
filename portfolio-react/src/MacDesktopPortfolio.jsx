@@ -562,12 +562,14 @@ function ProfileCenter() {
             onInit={(typewriter) => {
               typewriter
                 .typeString("Building secure, scalable full-stack applications.")
-                .pauseFor(400)
+                .pauseFor(200)
                 .typeString("<br/>Specialized in React, Node.js, MongoDB, and backend architecture.")
-                .pauseFor(400)
+                .pauseFor(200)
                 .typeString("<br/>Focused on production-grade engineering and security.")
-                .pauseFor(400)
+                .pauseFor(200)
                 .typeString("<br/>Solved 117+ LeetCode problems • Rating 1540.")
+                .pauseFor(200)
+                .typeString("<br/>From New Delhi, India")
                 .start()
             }}
           />
@@ -876,7 +878,7 @@ function About() {
         lineHeight: 1.75,
         margin: "0 0 20px"
       }}>
-        I am a Full Stack Developer specializing in the MERN stack, currently pursuing a B.Tech
+        I am a Full Stack Developer specializing in the MERN stack, from New Delhi, India. Currently pursuing a B.Tech
         in Computer Science and Engineering with a focus on Security. I build scalable and secure
         web applications using React, Node.js, Express, and MongoDB.
 
