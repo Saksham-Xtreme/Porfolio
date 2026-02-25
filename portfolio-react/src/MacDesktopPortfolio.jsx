@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Typewriter from "typewriter-effect";
+import "./mobile.css";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const PROJECTS = [
@@ -462,10 +463,11 @@ function ProfileCenter() {
       }}
     >
 
-      <div style={{ display: "flex", gap: 100, alignItems: "center" }}>
+      <div className="profile-center-wrapper" style={{ display: "flex", gap: 100, alignItems: "center" }}>
 
         {/* INTERACTIVE DEPTH GLOBE */}
         <div
+          className="globe-container"
           ref={containerRef}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
@@ -482,6 +484,7 @@ function ProfileCenter() {
 
           {/* Globe Core */}
           <div
+            className="globe-core"
             style={{
               position: "absolute",
               width: 240,
@@ -698,6 +701,7 @@ function Window({ id, title, emoji, children, zIndex, onClose, onMinimize, onFoc
 
   return (
     <motion.div
+      className="window"
       drag
       dragMomentum={false}
       dragElastic={0}
@@ -761,6 +765,7 @@ function Window({ id, title, emoji, children, zIndex, onClose, onMinimize, onFoc
 
       {/* Content — stopPropagation prevents scroll from triggering drag */}
       <div
+        className="window-content"
         style={{
           background: C.cream2,
           maxHeight: "70vh",
@@ -1200,7 +1205,7 @@ function Contact() {
           </motion.div>
         ) : (
           <motion.form key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={handleSubmit}>
-            <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+            <div className="contact-row" style={{ display: "flex", gap: 10, marginBottom: 12 }}>
               <input style={inputStyle} placeholder="Your Name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
               <input style={inputStyle} type="email" placeholder="Email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
             </div>
@@ -1219,7 +1224,7 @@ function Contact() {
             >
               Send Message
             </motion.button>
-            <div style={{ display: "flex", gap: 12, marginTop: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            <div  style={{ display: "flex", gap: 12, marginTop: 16, justifyContent: "center", flexWrap: "wrap" }}>
               {["📧 shivbhau2108@gmail.com", "🐙 https://github.com/Saksham-Xtreme", "💼 www.linkedin.com/in/saksham-tripathi-7b25b0330"].map((c) => (
                 <span key={c} style={{ fontFamily: "'DM Sans', system-ui", fontSize: 11, color: "#7a6a5a" }}>{c}</span>
               ))}
@@ -1576,7 +1581,9 @@ export default function Desktop() {
       </div>
 
       {/* Desktop icons — left (all icons) */}
-        <div style={{
+        <div 
+          className="desktop-icons" 
+          style={{
           position: "absolute",
           top: 60,
           left: 28,
@@ -1617,6 +1624,7 @@ export default function Desktop() {
 
       {/* Dock */}
       <div
+        className="dock"
         style={{
           position: "fixed",
           bottom: 12,
