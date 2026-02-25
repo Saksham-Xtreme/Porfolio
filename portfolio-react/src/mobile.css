@@ -1,0 +1,56 @@
+/* ───────────────────────────── */
+/* MOBILE RESPONSIVE LAYER */
+/* ───────────────────────────── */
+
+@media (max-width: 768px) {
+
+  /* Hide left desktop icons */
+  .desktop-icons {
+    display: none !important;
+  }
+
+  /* Stack profile section */
+  .profile-center-wrapper {
+    flex-direction: column !important;
+    gap: 40px !important;
+    text-align: center !important;
+  }
+
+  /* Resize globe */
+  .globe-container {
+    width: 220px !important;
+    height: 220px !important;
+  }
+
+  .globe-core {
+    width: 160px !important;
+    height: 160px !important;
+  }
+
+  /* Windows full screen */
+  .window {
+    width: 100vw !important;
+    height: calc(100vh - 24px) !important;
+    left: 0 !important;
+    top: 24px !important;
+    border-radius: 0 !important;
+  }
+
+  .window-content {
+    max-height: calc(100vh - 64px) !important;
+  }
+
+  /* Dock full width */
+  .dock {
+    width: 100%;
+    left: 0 !important;
+    transform: none !important;
+    border-radius: 0 !important;
+    justify-content: space-around !important;
+  }
+
+  /* Contact form stacking */
+  .contact-row {
+    flex-direction: column !important;
+  }
+}
