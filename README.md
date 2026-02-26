@@ -4,11 +4,7 @@ A macOS-inspired interactive developer portfolio built with React + Vite + Frame
 
 ## 🌐 Live Demo
 
-Deploy via Vercel:
-
-[https://sakshamdev.vercel.app]((https://sakshamtripathi.vercel.app/))
-
-(or your deployed URL)
+Deploy via Vercel: [https://sakshamtripathi.vercel.app](https://sakshamtripathi.vercel.app)
 
 ---
 
@@ -120,7 +116,7 @@ This avoids:
 ## 📁 Project Structure
 
 ```
-Porfolio/
+Portfolio/
 │
 ├── public/
 │   ├── profile.jpg
@@ -143,8 +139,8 @@ Porfolio/
 
 1. Clone repository:
    ```bash
-   git clone https://github.com/Saksham-Xtreme/Porfolio.git
-   cd Porfolio
+   git clone https://github.com/Saksham-Xtreme/Portfolio.git
+   cd Portfolio
    ```
 
 2. Install dependencies:
