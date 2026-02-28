@@ -353,7 +353,7 @@ function ProfileCenter() {
 
   const TECH = [
     "React","Node.js","MongoDB","Express",
-    "JavaScript","Python","C++","SQL",
+    "JavaScript","Ejs","C++","SQL",
     "HTML","CSS","Tailwind","Git"
   ]
 
