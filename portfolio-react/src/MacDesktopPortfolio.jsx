@@ -570,7 +570,7 @@ function ProfileCenter() {
                 .pauseFor(200)
                 .typeString("<br/>Focused on production-grade engineering and security.")
                 .pauseFor(200)
-                .typeString("<br/>Solved 120+ LeetCode problems • Rating 1540.")
+                .typeString("<br/>Solved 130+ LeetCode problems • Rating 1663.")
                 .pauseFor(200)
                 .typeString("<br/>From New Delhi, India")
                 .start()
@@ -935,9 +935,9 @@ function About() {
       color: "#5a4a3a",
       lineHeight: 1.7
     }}>
-      Problems Solved: 120+ <br/>
-      Contest Rating: 1540 <br/>
-      Global Rank: Top 35% approx <br/>
+      Problems Solved: 130+ <br/>
+      Contest Rating: 1663 <br/>
+      Global Rank: Top 16% approx <br/>
       Primary Language: C++ <br/>
       Core Areas: Arrays, Hash Tables, Dynamic Programming, Binary Search
     </div>
