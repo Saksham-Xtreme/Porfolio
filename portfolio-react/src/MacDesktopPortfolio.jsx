@@ -21,6 +21,14 @@ const PROJECTS = [
     demo: "https://publicthread.onrender.com/chats",
     github: "https://github.com/Saksham-Xtreme/YOUR_PUBLIC_THREAD",
   },
+  {
+    id: 3,
+    title: "Basera – Property Listing Platform",
+    desc: "full-stack property listing platform where users can create listings, upload images with Cloudinary, add reviews, and simulate bookings using a RESTful MVC architecture.",
+    tags: ["Node.js", "Express", "MongoDB", "EJS", "Cloudinary"],
+    demo: "https://basera-tijc.onrender.com/",
+    github: "https://github.com/Saksham-Xtreme/Basera",
+  },
 ];
 const SKILLS = {
   Frontend: [
