@@ -7,22 +7,14 @@ import "./mobile.css";
 const PROJECTS = [
   {
     id: 1,
-    title: "JaanRaksha – Emergency Response System",
-    desc: "Real-time emergency response web application using Firebase Authentication and Realtime Database. Implemented role-based access for citizens, responders, and administrators.",
-    tags: ["React", "Firebase", "Realtime DB", "Authentication"],
-    demo: "https://jaan-raksha-firebase-4w5s2nymm-sakshams-projects-2387838f.vercel.app/",
-    github: "https://github.com/Saksham-Xtreme/JaanRaksha_Firebase",
+    title: "LinkUp – Real-Time Video Call & Chat",
+    desc: "Real-time communication platform supporting 1:1 video calls and messaging using WebRTC peer-to-peer connections. Features Google OAuth login, JWT-based authentication, Socket.IO signaling, and persistent chat with MongoDB.",
+    tags: ["React", "Node.js", "Express", "MongoDB", "WebRTC", "Socket.IO", "JWT", "Google OAuth"],
+    demo: "https://link-up-sak.vercel.app/",
+    github: "https://github.com/Saksham-Xtreme/LinkUp",
   },
   {
     id: 2,
-    title: "PUBLIC THREAD – CRUD Chat Application",
-    desc: "Full-stack chat application using Node.js, Express.js, MongoDB. Built REST APIs and implemented Create, Read, Update, Delete operations.",
-    tags: ["Node.js", "Express", "MongoDB", "REST API"],
-    demo: "https://publicthread.onrender.com/chats",
-    github: "https://github.com/Saksham-Xtreme/YOUR_PUBLIC_THREAD",
-  },
-  {
-    id: 3,
     title: "Basera – Property Listing Platform",
     desc: "Full-stack property listing platform where users can create listings, upload images with Cloudinary, add reviews, and simulate bookings using a RESTful MVC architecture.",
     tags: ["Node.js", "Express", "MongoDB", "EJS", "Cloudinary"],
@@ -30,13 +22,21 @@ const PROJECTS = [
     github: "https://github.com/Saksham-Xtreme/Basera",
   },
   {
-    id: 4,
-    title: "LinkUp – Real-Time Video Call & Chat",
-    desc: "Real-time communication platform supporting 1:1 video calls and messaging using WebRTC peer-to-peer connections. Features Google OAuth login, JWT-based authentication, Socket.IO signaling, and persistent chat with MongoDB.",
-    tags: ["React", "Node.js", "Express", "MongoDB", "WebRTC", "Socket.IO", "JWT", "Google OAuth"],
-    demo: "https://link-up-sak.vercel.app/",
-    github: "https://github.com/Saksham-Xtreme/LinkUp",
+    id: 3,
+    title: "PUBLIC THREAD – CRUD Chat Application",
+    desc: "Full-stack chat application using Node.js, Express.js, MongoDB. Built REST APIs and implemented Create, Read, Update, Delete operations.",
+    tags: ["Node.js", "Express", "MongoDB", "REST API"],
+    demo: "https://publicthread.onrender.com/chats",
+    github: "https://github.com/Saksham-Xtreme/YOUR_PUBLIC_THREAD",
   },
+  {
+    id: 4,
+    title: "JaanRaksha – Emergency Response System",
+    desc: "Real-time emergency response web application using Firebase Authentication and Realtime Database. Implemented role-based access for citizens, responders, and administrators.",
+    tags: ["React", "Firebase", "Realtime DB", "Authentication"],
+    demo: "https://jaan-raksha-firebase-4w5s2nymm-sakshams-projects-2387838f.vercel.app/",
+    github: "https://github.com/Saksham-Xtreme/JaanRaksha_Firebase",
+  }
 ];
 const SKILLS = {
   Frontend: [
