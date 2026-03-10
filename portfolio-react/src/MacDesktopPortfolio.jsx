@@ -24,10 +24,18 @@ const PROJECTS = [
   {
     id: 3,
     title: "Basera – Property Listing Platform",
-    desc: "full-stack property listing platform where users can create listings, upload images with Cloudinary, add reviews, and simulate bookings using a RESTful MVC architecture.",
+    desc: "Full-stack property listing platform where users can create listings, upload images with Cloudinary, add reviews, and simulate bookings using a RESTful MVC architecture.",
     tags: ["Node.js", "Express", "MongoDB", "EJS", "Cloudinary"],
     demo: "https://basera-tijc.onrender.com/",
     github: "https://github.com/Saksham-Xtreme/Basera",
+  },
+  {
+    id: 4,
+    title: "LinkUp – Real-Time Video Call & Chat",
+    desc: "Real-time communication platform supporting 1:1 video calls and messaging using WebRTC peer-to-peer connections. Features Google OAuth login, JWT-based authentication, Socket.IO signaling, and persistent chat with MongoDB.",
+    tags: ["React", "Node.js", "Express", "MongoDB", "WebRTC", "Socket.IO", "JWT", "Google OAuth"],
+    demo: "https://link-up-sak.vercel.app/",
+    github: "https://github.com/Saksham-Xtreme/LinkUp",
   },
 ];
 const SKILLS = {
