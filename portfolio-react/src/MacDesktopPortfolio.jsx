@@ -1337,28 +1337,54 @@ function Resume() {
           PROJECTS
         </div>
 
+        
+
         <div>
-          JaanRaksha – Emergency Response System
+          LinkUp – Real-Time Video Call & Chat Platform
         </div>
-
+        
         <div style={{ paddingLeft: 12, marginBottom: 8 }}>
-          → Real-time emergency response web app  
+          → 1:1 video calls and real-time messaging  
           <br />
-          → Firebase Authentication and Realtime Database  
+          → WebRTC peer-to-peer communication  
           <br />
-          → Role-based access system
+          → React, Node.js, Express.js, MongoDB, Socket.IO  
         </div>
-
+        
+        <div>
+          Basera – Property Listing Platform
+        </div>
+        
+        <div style={{ paddingLeft: 12, marginBottom: 8 }}>
+          → Full-stack Property listing platform  
+          <br />
+          → Node.js, Express.js, MongoDB, EJS  
+          <br />
+          → Image uploads with Cloudinary and authentication with Passport.js  
+        </div>
+        
         <div>
           PUBLIC THREAD – CRUD Chat Application
         </div>
-
-        <div style={{ paddingLeft: 12, marginBottom: 12 }}>
+        
+        <div style={{ paddingLeft: 12, marginBottom: 8 }}>
           → Full-stack chat application  
           <br />
           → Node.js, Express.js, MongoDB  
           <br />
-          → REST API architecture
+          → REST API architecture  
+        </div>
+        
+        <div>
+          JaanRaksha – Emergency Response System
+        </div>
+        
+        <div style={{ paddingLeft: 12, marginBottom: 12 }}>
+          → Real-time emergency response web app  
+          <br />
+          → Firebase Authentication and Realtime Database  
+          <br />
+          → Role-based access system  
         </div>
 
         {/* Skills */}
@@ -1398,9 +1424,9 @@ function Resume() {
         <div>
           → 5★ rating in C++ on HackerRank  
           <br />
-          → Solved 100+ DSA problems on LeetCode  
+          → Solved 170+ DSA problems on LeetCode  
           <br />
-          → LeetCode Contest Rating: 1500+
+          → LeetCode Contest Rating: 1700+
         </div>
       </div>
 
