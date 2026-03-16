@@ -216,7 +216,7 @@ Welcome aboard.
   },
 
   resume: () => {
-    window.open("/Saksham-Dev-Resume.pdf", "_blank");
+    window.open("/Saksham_Instep_Resume.pdf", "_blank");
     return "Opening resume...";
   }
 
@@ -1432,7 +1432,7 @@ function Resume() {
 
       {/* Download Button */}
       <motion.a
-        href="/Saksham-Dev-Resume.pdf"
+        href="/Saksham_Instep_Resume.pdf"
         download
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.96 }}
