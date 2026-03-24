@@ -951,9 +951,9 @@ function About() {
       color: "#5a4a3a",
       lineHeight: 1.7
     }}>
-      Problems Solved: 170+ <br/>
-      Contest Rating: 1707 <br/>
-      Global Rank: Top 12.69%  <br/>
+      Problems Solved: 200+ <br/>
+      Contest Rating: 1712 <br/>
+      Global Rank: Top 12.38%  <br/>
       Primary Language: C++ <br/>
       Core Areas: Arrays, Hash Tables, Dynamic Programming, Binary Search
     </div>
