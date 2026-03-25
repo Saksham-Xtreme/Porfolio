@@ -18,6 +18,10 @@ app.use(express.json());
 
 app.use("/api/contact", contactRoutes);
 app.use("/api/projects", projectRoutes);
+app.get("/", (req, res) => {
+  res.send("Page is Working");
+});
+
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
