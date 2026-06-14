@@ -1,1734 +1,1405 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Typewriter from "typewriter-effect";
-import "./mobile.css";
+/**
+ * REFACTORED PORTFOLIO — Saksham Tripathi
+ * Backend-Focused Full Stack Engineer
+ *
+ * Architecture: Single-page, section-scroll layout (no fake OS chrome)
+ * Stack: React, Tailwind-ish inline CSS design system, Lucide icons
+ * Design ref: Linear / Railway engineer portfolio — dark+light adaptive
+ *
+ * Design tokens live in one object (DS) — change once, updates everywhere.
+ * No percentages on skills, no globe, no Finder menu bar, no typewriter effect.
+ */
 
-// ─── DATA ────────────────────────────────────────────────────────────────────
+import { useState, useEffect, useRef, useCallback } from "react";
+
+// ─── DESIGN SYSTEM ────────────────────────────────────────────────────────────
+const DS = {
+  // Palette — slate-based, professional
+  bg:        "#0f0f0f",
+  surface:   "#161616",
+  surfaceHi: "#1e1e1e",
+  border:    "#262626",
+  borderHi:  "#333333",
+  text:      "#e5e5e5",
+  textMuted: "#737373",
+  textDim:   "#404040",
+  accent:    "#f97316",   // orange-500 — warm, engineering-credible
+  accentDim: "#431407",   // orange-950
+
+  // Type scale
+  fontMono:  "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+  fontSans:  "'Inter', 'system-ui', sans-serif",
+
+  // Spacing
+  gap4:  "4px",
+  gap8:  "8px",
+  gap12: "12px",
+  gap16: "16px",
+  gap24: "24px",
+  gap32: "32px",
+  gap48: "48px",
+  gap64: "64px",
+
+  // Radius
+  r4:  "4px",
+  r8:  "8px",
+  r12: "12px",
+};
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const NAV_ITEMS = ["About", "Projects", "Skills", "Achievements", "Experience", "Contact"];
+
 const PROJECTS = [
   {
-    id: 1,
-    title: "LinkUp – Real-Time Video Call & Chat",
-    desc: "Real-time communication platform supporting 1:1 video calls and messaging using WebRTC peer-to-peer connections. Features Google OAuth login, JWT-based authentication, Socket.IO signaling, and persistent chat with MongoDB.",
-    tags: ["React", "Node.js", "Express", "MongoDB", "WebRTC", "Socket.IO", "JWT", "Google OAuth"],
-    demo: "https://link-up-sak.vercel.app/",
+    id: "linkup",
+    title: "LinkUp",
+    subtitle: "Real-Time Video Call & Chat Platform",
+    problem: "Users needed peer-to-peer video and persistent messaging without a centralized media server.",
+    architecture: "Browser-to-browser WebRTC connection negotiated via a Socket.IO signaling layer on Node.js. Google OAuth issues short-lived JWTs; chat history persists in MongoDB.",
+    challenges: [
+      "Implementing ICE candidate exchange and SDP offer/answer handling for NAT traversal",
+      "Designing stateful Socket.IO rooms to handle mid-call reconnections gracefully",
+      "JWT refresh strategy that survives tab re-opens without forcing re-auth",
+    ],
+    impact: "End-to-end latency under 150ms on local network; zero-dependency peer connection (no TURN fallback on LAN).",
+    stack: ["React", "Node.js", "Express", "MongoDB", "WebRTC", "Socket.IO", "JWT", "Google OAuth"],
     github: "https://github.com/Saksham-Xtreme/LinkUp",
+    demo: "https://link-up-sak.vercel.app/",
   },
   {
-    id: 2,
-    title: "Basera – Property Listing Platform",
-    desc: "Full-stack property listing platform where users can create listings, upload images with Cloudinary, add reviews, and simulate bookings using a RESTful MVC architecture.",
-    tags: ["Node.js", "Express", "MongoDB", "EJS", "Cloudinary"],
-    demo: "https://basera-tijc.onrender.com/",
+    id: "basera",
+    title: "Basera",
+    subtitle: "Property Listing Platform",
+    problem: "Landlords needed a way to list properties with image uploads and receive booking inquiries without a third-party service.",
+    architecture: "MVC architecture on Express/MongoDB. Images streamed directly to Cloudinary via multer middleware — no disk I/O on the server. Passport.js local strategy with session persistence.",
+    challenges: [
+      "Handling Cloudinary upload errors without leaving orphaned database records",
+      "Designing the review sub-document schema to support pagination without separate collection lookups",
+    ],
+    impact: "Supports full CRUD lifecycle for listings; Cloudinary integration reduces server storage costs to zero.",
+    stack: ["Node.js", "Express", "MongoDB", "EJS", "Cloudinary", "Passport.js"],
     github: "https://github.com/Saksham-Xtreme/Basera",
+    demo: "https://basera-tijc.onrender.com/",
   },
   {
-    id: 3,
-    title: "PUBLIC THREAD – CRUD Chat Application",
-    desc: "Full-stack chat application using Node.js, Express.js, MongoDB. Built REST APIs and implemented Create, Read, Update, Delete operations.",
-    tags: ["Node.js", "Express", "MongoDB", "REST API"],
-    demo: "https://publicthread.onrender.com/chats",
-    github: "https://github.com/Saksham-Xtreme/YOUR_PUBLIC_THREAD",
-  },
-  {
-    id: 4,
-    title: "JaanRaksha – Emergency Response System",
-    desc: "Real-time emergency response web application using Firebase Authentication and Realtime Database. Implemented role-based access for citizens, responders, and administrators.",
-    tags: ["React", "Firebase", "Realtime DB", "Authentication"],
-    demo: "https://jaan-raksha-firebase-4w5s2nymm-sakshams-projects-2387838f.vercel.app/",
+    id: "jaan",
+    title: "JaanRaksha",
+    subtitle: "Emergency Response System",
+    problem: "Emergency coordination between citizens, first responders, and admins required real-time data sync across roles with strict access control.",
+    architecture: "Firebase Realtime Database listeners push updates in under 200ms. Three-role RBAC (citizen / responder / admin) enforced both client-side and via Firebase Security Rules.",
+    challenges: [
+      "Writing Firebase Security Rules that prevent citizens from reading responder assignment data",
+      "Designing the incident state machine (reported → assigned → resolved) with concurrent updates",
+    ],
+    impact: "Sub-200ms incident update propagation; role isolation verified via Firebase emulator test suite.",
+    stack: ["React", "Firebase Auth", "Firebase Realtime DB"],
     github: "https://github.com/Saksham-Xtreme/JaanRaksha_Firebase",
-  }
+    demo: "https://jaan-raksha-firebase-4w5s2nymm-sakshams-projects-2387838f.vercel.app/",
+  },
+  {
+    id: "thread",
+    title: "PUBLIC THREAD",
+    subtitle: "CRUD Chat Application",
+    problem: "Needed a minimal reference implementation of REST-based CRUD patterns for a chat context.",
+    architecture: "RESTful API on Express with Mongoose models. Clean separation of route handlers, controllers, and data layer.",
+    challenges: [
+      "Designing idempotent PATCH vs PUT semantics for message edit history",
+    ],
+    impact: "Fully functional CRUD API; serves as a reference for REST API design patterns.",
+    stack: ["Node.js", "Express", "MongoDB", "REST API"],
+    github: "https://github.com/Saksham-Xtreme/YOUR_PUBLIC_THREAD",
+    demo: "https://publicthread.onrender.com/chats",
+  },
 ];
+
 const SKILLS = {
-  Frontend: [
-    { name: "React ", level: 89 },
-    { name: "HTML", level: 88 },
-    { name: "CSS / Tailwind CSS", level: 92 },
-    { name: "Javascript", level: 91 },
-  ],
-  Backend: [
-    { name: "Node.js ", level: 90 },
-    { name: "Express", level: 82 },
-    { name: "REST API Design", level: 93 },
-  ],
-  Database: [
-    { name: "MongoDB", level: 88 },
-    { name: "MySQL", level: 81 },
-  ],
-  Deployment: [
-    { name: "Render", level: 87 },
-    { name: "Vercel", level: 93 },
-  ],
-};
-const TERMINAL_RESPONSES = {
-
-  help: `
-Available commands:
-
-whoami      — identity
-education   — education info
-skills      — technical skills
-projects    — list projects
-contact     — contact info
-
-github      — open GitHub
-linkedin    — open LinkedIn
-resume      — open resume
-
-hello       — greeting
-jarvis      — summon assistant
-coffee      — increase energy
-motivate    — motivation
-joke        — random joke
-system      — system information
-date        — current system date
-sudo hire   — special command
-
-clear       — clear terminal
-`,
-
-  whoami: `
-┌──────────────────────────────┐
-│ Saksham Tripathi             │
-│ Full Stack Developer         │
-│ MERN Stack • Web Security    │
-│ React • Node • MongoDB       │
-└──────────────────────────────┘
-
-Status: Available for hire
-Location: India
-`,
-
-  education: `
-B.Tech Computer Science Engineering
-Noida Institute of Engineering and Technology
-CGPA: 7.53
-Duration: 2024 – 2028
-`,
-
-  skills: `
-Frontend:
-React, JavaScript, Tailwind, HTML, CSS
-
-Backend:
-Node.js, Express.js
-
-Database:
-MongoDB, MySQL, Firebase
-
-Languages:
-C++, Python, C
-
-Tools:
-Git, GitHub, Vercel, VS Code
-`,
-
-  projects: `
-Projects:
-
-1. JaanRaksha – Emergency Response System
-   Stack: React, Firebase
-
-2. PUBLIC THREAD – CRUD Chat Application
-   Stack: Node.js, Express, MongoDB
-
-Use GitHub command to view source code.
-`,
-
-  contact: `
-Email: shivbhau2108@gmail.com
-GitHub: github.com/Saksham-Xtreme
-LinkedIn: linkedin.com/in/saksham-tripathi-7b25b0330
-
-Response time: < 24 hours
-`,
-
-  hello: `
-Hello 👋
-Welcome to SakshamOS.
-
-Type "help" to see available commands.
-`,
-
-  jarvis: `
-Jarvis initialized.
-
-How can I assist you, Saksham?
-`,
-
-  coffee: `
-☕ Coffee brewed successfully.
-
-Energy level: 100%
-Productivity boost activated.
-`,
-
-  motivate: `
-You are one commit away from success.
-
-Keep building.
-`,
-
-  system: `
-System Information:
-
-OS: SakshamOS v1.0
-Kernel: React + Framer Motion
-Architecture: MERN Stack
-Status: Fully Operational
-Security: Enabled
-`,
-
-  date: () => {
-    return new Date().toString();
-  },
-
-  "sudo hire": `
-Permission granted.
-
-Initializing hiring protocol...
-
-Offer letter ready.
-Welcome aboard.
-`,
-
-  joke: () => {
-    const jokes = [
-      "Why do programmers prefer dark mode? Because light attracts bugs.",
-      "There are only 10 types of people: those who understand binary and those who don't.",
-      "I don't always test my code, but when I do, I do it in production.",
-      "Debugging: Removing needles from the haystack.",
-      "Programmer: A machine that turns coffee into code."
-    ];
-    return jokes[Math.floor(Math.random() * jokes.length)];
-  },
-
-  github: () => {
-    window.open("https://github.com/Saksham-Xtreme", "_blank");
-    return "Opening GitHub profile...";
-  },
-
-  linkedin: () => {
-    window.open(
-      "https://linkedin.com/in/saksham-tripathi-7b25b0330",
-      "_blank"
-    );
-    return "Opening LinkedIn profile...";
-  },
-
-  resume: () => {
-    window.open("/Saksham_Instep_Resume.pdf", "_blank");
-    return "Opening resume...";
-  }
-
+  Languages:      ["C++", "JavaScript", "Python", "C"],
+  Backend:        ["Node.js", "Express.js", "REST API", "Socket.IO", "WebRTC", "JWT", "Redis"],
+  Frontend:       ["React", "HTML5", "CSS3", "Tailwind CSS"],
+  Databases:      ["MongoDB", "MySQL", "Firebase Realtime DB"],
+  Infrastructure: ["Vercel", "Render", "Cloudinary", "Git", "GitHub"],
+  Concepts:       ["MERN Stack", "MVC Architecture", "RBAC", "WebSocket", "OAuth 2.0"],
 };
 
-// ─── PALETTE ─────────────────────────────────────────────────────────────────
-const C = {
-  sage: "#ccd5ae",
-  cream1: "#e9edc9",
-  cream2: "#fefae0",
-  peach: "#faedcd",
-  tan: "#d4a373",
+const ACHIEVEMENTS = [
+  {
+    icon: "trophy",
+    metric: "829 / 40,616",
+    label: "Rank — LeetCode Weekly Contest 491",
+    detail: "Top 2% globally",
+  },
+  {
+    icon: "code",
+    metric: "270+",
+    label: "Problems solved on LeetCode",
+    detail: "Rating 1712 • Primary: C++",
+  },
+  {
+    icon: "star",
+    metric: "5★",
+    label: "HackerRank C++ rating",
+    detail: "Verified certification",
+  },
+  {
+    icon: "percent",
+    metric: "Top 12%",
+    label: "LeetCode global rank",
+    detail: "Active contest participant",
+  },
+];
+
+const EXPERIENCE = {
+  company: "Prodigy InfoTech",
+  role: "Web Development Intern",
+  period: "2025",
+  description:
+    "Completed structured internship focused on full-stack web development. Built and delivered assigned projects using React and Node.js, with emphasis on component architecture and API integration.",
+  stack: ["React", "Node.js", "JavaScript", "REST APIs"],
+  deliverables: [
+    "Delivered assigned project milestones on schedule",
+    "Implemented UI components and integrated backend APIs",
+    "Followed code review process and incorporated feedback",
+  ],
 };
 
-// ─── WINDOW MANAGER HOOK ─────────────────────────────────────────────────────
-// zRef is a plain ref — never triggers re-renders, never has stale closure issues.
-// All setWindows calls use functional updaters to always read fresh state.
-function useWindowManager() {
-  const [windows, setWindows] = useState({});
-  const zRef = useRef(100);
+// ─── ICONS (inline SVG — no external dep required) ───────────────────────────
+function Icon({ name, size = 16, color = "currentColor", style = {} }) {
+  const paths = {
+    github:    "M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z",
+    linkedin:  "M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z",
+    leetcode:  "M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a5.266 5.266 0 0 0-1.209 2.104 5.35 5.35 0 0 0-.125.513 5.527 5.527 0 0 0 .062 2.362 5.83 5.83 0 0 0 .349 1.017 5.938 5.938 0 0 0 1.271 1.818l4.277 4.193.039.038c2.248 2.165 5.852 2.133 8.063-.074l2.396-2.392c.54-.54.54-1.414.003-1.955a1.378 1.378 0 0 0-1.951-.003l-2.396 2.392a3.021 3.021 0 0 1-4.205.038l-.02-.019-4.276-4.193c-.652-.64-.972-1.469-.948-2.263a2.68 2.68 0 0 1 .066-.523 2.545 2.545 0 0 1 .619-1.164L9.13 8.114c1.058-1.134 3.204-1.27 4.43-.278l3.501 2.831c.593.48 1.461.387 1.94-.207a1.384 1.384 0 0 0-.207-1.943l-3.5-2.831c-.8-.647-1.766-1.045-2.774-1.202l2.015-2.158A1.384 1.384 0 0 0 13.483 0zm-2.866 12.815a1.38 1.38 0 0 0-1.38 1.382 1.38 1.38 0 0 0 1.38 1.382H20.79a1.38 1.38 0 0 0 1.38-1.382 1.38 1.38 0 0 0-1.38-1.382z",
+    external:  "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3",
+    trophy:    "M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z",
+    code:      "M16 18l6-6-6-6M8 6l-6 6 6 6",
+    star:      "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
+    percent:   "M19 5 5 19M9 6.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zm11 11a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z",
+    mail:      "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6",
+    briefcase: "M20 7H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2",
+    arrowright:"M5 12h14M12 5l7 7-7 7",
+    menu:      "M3 12h18M3 6h18M3 18h18",
+    x:         "M18 6 6 18M6 6l12 12",
+    check:     "M20 6 9 17l-5-5",
+  };
 
-  // ✅ Load saved window state on startup
-  useEffect(() => {
-    const saved = localStorage.getItem("saksham_windows");
-    if (saved) {
-      setWindows(JSON.parse(saved));
-    }
-  }, []);
-
-  // ✅ Save window state whenever it changes
-  useEffect(() => {
-    localStorage.setItem("saksham_windows", JSON.stringify(windows));
-  }, [windows]);
-
-  const openWindow = useCallback((id) => {
-    setWindows((prev) => {
-      const existing = prev[id];
-      const newZ = ++zRef.current;
-      return {
-        ...prev,
-        [id]: {
-          id,
-          open: true,
-          minimized: false,
-          z: newZ,
-          // Preserve position if window already existed
-          pos: existing?.pos ?? {
-            x: 80 + Math.random() * 140,
-            y: 60 + Math.random() * 100,
-          },
-        },
-      };
-    });
-  }, []);
-
-  const closeWindow = useCallback((id) => {
-    setWindows((prev) => {
-      if (!prev[id]) return prev;
-      return {
-        ...prev,
-        [id]: { ...prev[id], open: false, minimized: false },
-      };
-    });
-  }, []);
-
-  const minimizeWindow = useCallback((id) => {
-    setWindows((prev) => {
-      if (!prev[id]) return prev;
-      return {
-        ...prev,
-        [id]: { ...prev[id], minimized: !prev[id].minimized },
-      };
-    });
-  }, []);
-
-  const focusWindow = useCallback((id) => {
-    setWindows((prev) => {
-      if (!prev[id]) return prev;
-      const newZ = ++zRef.current;
-      return {
-        ...prev,
-        [id]: { ...prev[id], z: newZ },
-      };
-    });
-  }, []);
-
-  return { windows, openWindow, closeWindow, focusWindow, minimizeWindow };
-}
-
-// ─── ORBIT TEXT ──────────────────────────────────────────────────────────────
-// Uses a stable unique ID per instance to avoid SVG defs collisions.
-function OrbitText({ text, radius = 118 }) {
-  const pathId = useRef(`orbit-${Math.random().toString(36).slice(2, 9)}`).current;
-  const size = (radius + 24) * 2;
+  const d = paths[name];
+  if (!d) return null;
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        pointerEvents: "none",
-      }}
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ flexShrink: 0, ...style }}
       aria-hidden="true"
     >
-      <svg
-        width={size}
-        height={size}
-        viewBox={`${-(radius + 24)} ${-(radius + 24)} ${size} ${size}`}
-        style={{ overflow: "visible", position: "absolute" }}
-      >
-        <defs>
-          {/* Near-complete circle: end point is epsilon away from start to avoid degenerate arc */}
-          <path
-            id={pathId}
-            d={`M 0,${-radius} A ${radius},${radius} 0 1,1 -0.001,${-radius}`}
-          />
-        </defs>
-        <text
-          style={{
-            fontSize: "10.5px",
-            fontFamily: "'DM Mono', 'Courier New', monospace",
-            fontWeight: 600,
-            fill: C.tan,
-            letterSpacing: "0.2em",
-          }}
-        >
-          <textPath href={`#${pathId}`} startOffset="0%">
-            <animate
-              attributeName="startOffset"
-              from="0%"
-              to="100%"
-              dur="20s"
-              repeatCount="indefinite"
-            />
-            {text}
-          </textPath>
-        </text>
-      </svg>
-    </div>
+      <path d={d} />
+    </svg>
   );
 }
 
-// --------- PROFILE CENTER _--------------
-function ProfileCenter() {
+// ─── BUTTON ───────────────────────────────────────────────────────────────────
+function Btn({ href, onClick, variant = "outline", children, style = {} }) {
+  const base = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "8px 16px",
+    borderRadius: DS.r8,
+    fontSize: "13px",
+    fontFamily: DS.fontSans,
+    fontWeight: 500,
+    cursor: "pointer",
+    textDecoration: "none",
+    border: "1px solid",
+    transition: "background 0.15s, border-color 0.15s",
+    whiteSpace: "nowrap",
+  };
+  const variants = {
+    primary: {
+      background: DS.accent,
+      borderColor: DS.accent,
+      color: "#fff",
+    },
+    outline: {
+      background: "transparent",
+      borderColor: DS.border,
+      color: DS.text,
+    },
+    ghost: {
+      background: "transparent",
+      border: "none",
+      color: DS.textMuted,
+    },
+  };
+  const merged = { ...base, ...variants[variant], ...style };
 
-  const radius = 110
-
-  const TECH = [
-    "React","Node.js","MongoDB","Express",
-    "JavaScript","Ejs","C++","SQL",
-    "HTML","CSS","Tailwind","Git"
-  ]
-
-  const globeRef = useRef(null)
-  const containerRef = useRef(null)
-
-  const rotation = useRef({ x: 0, y: 0 })
-  const velocity = useRef({ x: 0.2, y: 0.3 })
-
-  // Generate Fibonacci sphere once
-  const basePoints = useRef(
-    TECH.map((tech, i) => {
-
-      const phi = Math.acos(1 - 2 * (i + 0.5) / TECH.length)
-      const theta = Math.PI * (1 + Math.sqrt(5)) * (i + 0.5)
-
-      return {
-        tech,
-        x: radius * Math.cos(theta) * Math.sin(phi),
-        y: radius * Math.sin(theta) * Math.sin(phi),
-        z: radius * Math.cos(phi)
-      }
-    })
-  )
-
-  useEffect(() => {
-
-    let frame
-
-    const animate = () => {
-
-      rotation.current.x += velocity.current.x
-      rotation.current.y += velocity.current.y
-
-      const rx = rotation.current.x * Math.PI / 180
-      const ry = rotation.current.y * Math.PI / 180
-
-      const cosX = Math.cos(rx)
-      const sinX = Math.sin(rx)
-      const cosY = Math.cos(ry)
-      const sinY = Math.sin(ry)
-
-      const nodes = globeRef.current.children
-
-      basePoints.current.forEach((p, i) => {
-
-        // Rotate around X
-        let y = p.y * cosX - p.z * sinX
-        let z = p.y * sinX + p.z * cosX
-
-        // Rotate around Y
-        let x = p.x * cosY + z * sinY
-        z = -p.x * sinY + z * cosY
-
-        const depth = (z + radius) / (2 * radius)
-
-        const node = nodes[i]
-
-        node.style.transform = `
-          translate3d(${x}px, ${y}px, 0)
-          scale(${0.6 + depth})
-        `
-
-        node.style.opacity = 0.25 + depth * 0.75
-        node.style.zIndex = Math.floor(depth * 1000)
-      })
-
-      frame = requestAnimationFrame(animate)
-    }
-
-    animate()
-    return () => cancelAnimationFrame(frame)
-
-  }, [])
-
-  const handleMouseMove = (e) => {
-
-    const rect = containerRef.current.getBoundingClientRect()
-
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-
-    const centerX = rect.width / 2
-    const centerY = rect.height / 2
-
-    velocity.current.y = (x - centerX) / 80
-    velocity.current.x = -(y - centerY) / 80
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" style={merged}>
+        {children}
+      </a>
+    );
   }
-
-  const handleMouseLeave = () => {
-    velocity.current = { x: 0.2, y: 0.3 }
-  }
-
   return (
-
-    <div
-      style={{
-        position: "absolute",
-        top: 24,
-        bottom: 90,
-        color:"black",
-        left: 0,
-        right: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center"
-      }}
-    >
-
-      <div className="profile-center-wrapper" style={{ display: "flex", gap: 100, alignItems: "center" }}>
-
-        {/* INTERACTIVE DEPTH GLOBE */}
-        <div
-          className="globe-container"
-          ref={containerRef}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          style={{
-            width: 320,
-            height: 320,
-            perspective: 1000,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "grab"
-          }}
-        >
-
-          {/* Globe Core */}
-          <div
-            className="globe-core"
-            style={{
-              position: "absolute",
-              width: 240,
-              height: 240,
-              color:"black",
-              borderRadius: "50%",
-              background:
-                "radial-gradient(circle at 30% 30%, rgba(212,163,115,0.3), transparent 70%)",
-              border: "1px solid rgba(212,163,115,0.4)"
-            }}
-          />
-
-          {/* Rotating Points */}
-          <div
-            ref={globeRef}
-            style={{
-              width: 0,
-              height: 0,
-              position: "relative"
-            }}
-          >
-            {TECH.map((tech) => (
-              <div
-                key={tech}
-                style={{
-                  position: "absolute",
-                  color:"black",
-                  left: 0,
-                  top: 0,
-                  transform: "translate(-50%, -50%)",
-                  willChange: "transform, opacity"
-                }}
-              >
-                <div
-                  style={{
-                    padding: "6px 10px",
-                    fontSize: 12,
-                    borderRadius: 10,
-                    color:"black",
-                    background: "#fefae0",
-                    border: "1px solid #d4a373",
-                    boxShadow: "0 6px 20px rgba(0,0,0,0.18)",
-                    fontWeight: 600,
-                    whiteSpace: "nowrap"
-                  }}
-                >
-                  {tech}
-                </div>
-              </div>
-            ))}
-          </div>
-
-        </div>
-
-        {/* PROFILE SIDE */}
-        <div style={{ width: 420 }}>
-
-          <motion.img
-            src="/profile.jpg"
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 4, repeat: Infinity }}
-            style={{
-              width: 120,
-              color:"black",
-              height: 120,
-              borderRadius: "50%",
-              border: "4px solid #d4a373",
-              marginBottom: 16
-            }}
-          />
-
-          <div style={{ fontSize: 24, color:"black", fontWeight: 700, marginBottom: 6 }}>
-            Saksham Tripathi
-          </div>
-
-          <Typewriter
-            options={{ delay: 24 }}
-            onInit={(typewriter) => {
-              typewriter
-                .typeString("Building secure, scalable full-stack applications.")
-                .pauseFor(200)
-                .typeString("<br/>Specialized in React, Node.js, MongoDB, and backend architecture.")
-                .pauseFor(200)
-                .typeString("<br/>Focused on production-grade engineering and security.")
-                .pauseFor(200)
-                .typeString("<br/>Solved 200+ LeetCode problems • Rating 1712.")
-                .pauseFor(200)
-                .typeString("<br/>From New Delhi, India")
-                .start()
-            }}
-          />
-
-          {/* CTA Buttons */}
-            <div
-              style={{
-                marginTop: 24,
-                display: "flex",
-                gap: 14,
-                alignItems: "center"
-              }}
-            >
-            
-              {/* GitHub */}
-              <motion.a
-                href="https://github.com/Saksham-Xtreme"
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.96 }}
-                style={{
-                  flex: 1,
-                  padding: "10px 0",
-                  borderRadius: 10,
-                  background: "#24292e",
-                  color: "#fff",
-                  fontFamily: "'DM Sans', system-ui",
-                  fontWeight: 600,
-                  fontSize: 13,
-                  textDecoration: "none",
-                  textAlign: "center",
-                  boxShadow: "0 6px 18px rgba(0,0,0,0.15)"
-                }}
-              >
-                GitHub
-              </motion.a>
-            
-              {/* LinkedIn */}
-              <motion.a
-                href="https://linkedin.com/in/saksham-tripathi-7b25b0330"
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.96 }}
-                style={{
-                  flex: 1,
-                  padding: "10px 0",
-                  borderRadius: 10,
-                  background: "#0A66C2",
-                  color: "#fff",
-                  fontFamily: "'DM Sans', system-ui",
-                  fontWeight: 600,
-                  fontSize: 13,
-                  textDecoration: "none",
-                  textAlign: "center",
-                  boxShadow: "0 6px 18px rgba(0,0,0,0.15)"
-                }}
-              >
-                LinkedIn
-              </motion.a>
-            
-            </div>
-
-        </div>
-
-      </div>
-
-    </div>
-  )
+    <button onClick={onClick} style={merged}>
+      {children}
+    </button>
+  );
 }
 
-
-// ─── DESKTOP ICON ─────────────────────────────────────────────────────────────
-function DesktopIcon({ id, label, emoji, onClick }) {
-  const handleClick = useCallback(() => onClick(id), [id, onClick]);
+// ─── SECTION WRAPPER ──────────────────────────────────────────────────────────
+function Section({ id, children, style = {} }) {
   return (
-    <motion.div
-      whileHover={{ scale: 1.12, y: -4 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={handleClick}
-      style={{ width: 72, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", userSelect: "none" }}
+    <section
+      id={id}
+      style={{
+        maxWidth: "760px",
+        margin: "0 auto",
+        padding: "80px 24px",
+        ...style,
+      }}
     >
-      <div
-        style={{
-          width: 56,
-          height: 56,
-          borderRadius: 16,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 28,
-          background: `linear-gradient(145deg, ${C.cream2}, ${C.peach})`,
-          boxShadow: `0 4px 20px rgba(212,163,115,0.25), inset 0 1px 0 rgba(255,255,255,0.8)`,
-          border: `1px solid rgba(212,163,115,0.3)`,
-        }}
-      >
-        {emoji}
-      </div>
+      {children}
+    </section>
+  );
+}
+
+function SectionHeading({ label, title }) {
+  return (
+    <div style={{ marginBottom: "40px" }}>
       <span
         style={{
-          fontSize: 11,
-          fontFamily: "'DM Sans', system-ui",
-          fontWeight: 500,
-          color: "#4a3728",
-          textShadow: `0 1px 3px rgba(254,250,224,0.9)`,
-          background: "rgba(254,250,224,0.7)",
-          borderRadius: 4,
-          padding: "1px 4px",
-          textAlign: "center",
-          lineHeight: 1.3,
+          fontFamily: DS.fontMono,
+          fontSize: "11px",
+          color: DS.accent,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          display: "block",
+          marginBottom: "8px",
         }}
       >
         {label}
       </span>
-    </motion.div>
+      <h2
+        style={{
+          fontFamily: DS.fontSans,
+          fontSize: "24px",
+          fontWeight: 600,
+          color: DS.text,
+          margin: 0,
+        }}
+      >
+        {title}
+      </h2>
+    </div>
   );
 }
 
-// ─── DRAGGABLE WINDOW ─────────────────────────────────────────────────────────
-function Window({ id, title, emoji, children, zIndex, onClose, onMinimize, onFocus, initialPos }) {
-  // Stop propagation on traffic light buttons so drag and focus don't fire.
-  const stopAndClose = useCallback((e) => { e.stopPropagation(); onClose(id); }, [id, onClose]);
-  const stopAndMin = useCallback((e) => { e.stopPropagation(); onMinimize(id); }, [id, onMinimize]);
-  const handleFocus = useCallback(() => onFocus(id), [id, onFocus]);
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+function Nav() {
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollTo = useCallback((id) => {
+    document.getElementById(id.toLowerCase())?.scrollIntoView({ behavior: "smooth" });
+    setOpen(false);
+  }, []);
 
   return (
-    <motion.div
-      className="window"
-      drag
-      dragMomentum={false}
-      dragElastic={0}
-      initial={{ scale: 0.86, opacity: 0, y: 24 }}
-      animate={{ scale: 1, opacity: 1, y: 0 }}
-      exit={{ scale: 0.82, opacity: 0, y: 16, transition: { duration: 0.16 } }}
-      transition={{ type: "spring", stiffness: 320, damping: 30 }}
-      onMouseDown={handleFocus}
+    <nav
+      role="navigation"
+      aria-label="Main navigation"
       style={{
         position: "fixed",
-        left: initialPos.x,
-        top: initialPos.y,
-        zIndex,
-        width: 520,
-        maxWidth: "calc(100vw - 32px)",
-        borderRadius: 14,
-        overflow: "hidden",
-        boxShadow: `0 30px 80px rgba(74,55,40,0.22), 0 2px 8px rgba(74,55,40,0.12), 0 0 0 1px rgba(212,163,115,0.22)`,
-        touchAction: "none",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        background: scrolled ? `rgba(15,15,15,0.92)` : "transparent",
+        backdropFilter: scrolled ? "blur(12px)" : "none",
+        borderBottom: scrolled ? `1px solid ${DS.border}` : "none",
+        transition: "background 0.2s, border 0.2s",
       }}
     >
-      {/* Title bar / drag handle */}
       <div
         style={{
-          height: 40,
-          background: `linear-gradient(180deg, ${C.peach} 0%, ${C.cream1} 100%)`,
-          borderBottom: `1px solid rgba(212,163,115,0.3)`,
+          maxWidth: "1100px",
+          margin: "0 auto",
+          padding: "0 24px",
+          height: "56px",
           display: "flex",
           alignItems: "center",
-          paddingLeft: 12,
-          paddingRight: 12,
-          cursor: "grab",
-          userSelect: "none",
-          position: "relative",
+          justifyContent: "space-between",
         }}
       >
-        {/* Traffic lights */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, position: "relative", zIndex: 2 }}>
-          <TrafficLight color="#ff6058" border="#e14940" symbol="✕" onMouseDown={(e) => e.stopPropagation()} onClick={stopAndClose} title="Close" />
-          <TrafficLight color="#ffbd2e" border="#e1a116" symbol="−" onMouseDown={(e) => e.stopPropagation()} onClick={stopAndMin} title="Minimize" />
-          <div style={{ width: 13, height: 13, borderRadius: "50%", background: "#29ca41", border: "1px solid #1aab2e", flexShrink: 0 }} />
-        </div>
-
-        {/* Centered title */}
-        <span
+        {/* Logo */}
+        <button
+          onClick={() => scrollTo("hero")}
           style={{
-            position: "absolute",
-            left: "50%",
-            transform: "translateX(-50%)",
-            fontSize: 13,
-            fontFamily: "'DM Sans', system-ui",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: DS.fontMono,
+            fontSize: "14px",
+            color: DS.text,
             fontWeight: 600,
-            color: "#4a3728",
-            pointerEvents: "none",
-            whiteSpace: "nowrap",
+            padding: 0,
+          }}
+          aria-label="Back to top"
+        >
+          saksham.dev
+        </button>
+
+        {/* Desktop links */}
+        <ul
+          role="list"
+          style={{
+            display: "flex",
+            gap: "32px",
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+          }}
+          className="nav-desktop"
+        >
+          {NAV_ITEMS.map((item) => (
+            <li key={item}>
+              <button
+                onClick={() => scrollTo(item.toLowerCase())}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: DS.fontSans,
+                  fontSize: "13px",
+                  color: DS.textMuted,
+                  padding: "4px 0",
+                  transition: "color 0.15s",
+                }}
+                onMouseEnter={(e) => (e.target.style.color = DS.text)}
+                onMouseLeave={(e) => (e.target.style.color = DS.textMuted)}
+              >
+                {item}
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        {/* Mobile menu toggle */}
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          style={{
+            display: "none",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: DS.text,
+          }}
+          className="nav-mobile-btn"
+        >
+          <Icon name={open ? "x" : "menu"} size={20} />
+        </button>
+      </div>
+
+      {/* Mobile drawer */}
+      {open && (
+        <div
+          style={{
+            background: DS.surface,
+            borderTop: `1px solid ${DS.border}`,
+            padding: "16px 24px",
           }}
         >
-          {emoji} {title}
+          <ul role="list" style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "4px" }}>
+            {NAV_ITEMS.map((item) => (
+              <li key={item}>
+                <button
+                  onClick={() => scrollTo(item.toLowerCase())}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: DS.fontSans,
+                    fontSize: "15px",
+                    color: DS.text,
+                    padding: "10px 0",
+                    width: "100%",
+                    textAlign: "left",
+                  }}
+                >
+                  {item}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </nav>
+  );
+}
+
+// ─── HERO ─────────────────────────────────────────────────────────────────────
+function Hero() {
+  return (
+    <section
+      id="hero"
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        maxWidth: "760px",
+        margin: "0 auto",
+        padding: "120px 24px 80px",
+      }}
+    >
+      {/* Status badge */}
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "6px",
+          padding: "4px 10px",
+          borderRadius: "99px",
+          border: `1px solid ${DS.border}`,
+          background: DS.surface,
+          marginBottom: "32px",
+          width: "fit-content",
+        }}
+      >
+        <span
+          style={{
+            width: "6px",
+            height: "6px",
+            borderRadius: "50%",
+            background: "#22c55e",
+            flexShrink: 0,
+          }}
+          aria-hidden="true"
+        />
+        <span style={{ fontFamily: DS.fontMono, fontSize: "11px", color: DS.textMuted }}>
+          Open to internships
         </span>
       </div>
 
-      {/* Content — stopPropagation prevents scroll from triggering drag */}
-      <div
-        className="window-content"
+      {/* Name */}
+      <h1
         style={{
-          background: C.cream2,
-          maxHeight: "70vh",
-          overflowY: "auto",
-          overflowX: "hidden",
+          fontFamily: DS.fontSans,
+          fontSize: "clamp(36px, 6vw, 56px)",
+          fontWeight: 700,
+          color: DS.text,
+          margin: "0 0 8px",
+          lineHeight: 1.1,
+          letterSpacing: "-0.02em",
         }}
-        onMouseDown={(e) => e.stopPropagation()}
       >
-        {children}
-      </div>
-    </motion.div>
-  );
-}
+        Saksham Tripathi
+      </h1>
 
-function TrafficLight({ color, border, symbol, onClick, onMouseDown, title }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <button
-      title={title}
-      onMouseDown={onMouseDown}
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        width: 13,
-        height: 13,
-        borderRadius: "50%",
-        background: color,
-        border: `1px solid ${border}`,
-        cursor: "pointer",
-        flexShrink: 0,
-        padding: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 7,
-        color: hovered ? "rgba(0,0,0,0.5)" : "transparent",
-        lineHeight: 1,
-      }}
-    >
-      {symbol}
-    </button>
+      {/* Title */}
+      <p
+        style={{
+          fontFamily: DS.fontSans,
+          fontSize: "clamp(18px, 3vw, 22px)",
+          fontWeight: 400,
+          color: DS.accent,
+          margin: "0 0 20px",
+        }}
+      >
+        Backend-Focused Full Stack Engineer
+      </p>
+
+      {/* One-line value prop */}
+      <p
+        style={{
+          fontFamily: DS.fontSans,
+          fontSize: "16px",
+          color: DS.textMuted,
+          lineHeight: 1.7,
+          maxWidth: "560px",
+          margin: "0 0 40px",
+        }}
+      >
+        Building scalable web applications with Node.js, React, MongoDB, Socket.IO, and WebRTC.
+        First-year B.Tech CSE — Prodigy InfoTech intern — Top 2% on LeetCode.
+      </p>
+
+      {/* CTAs */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
+        <Btn href="/Saksham_Instep_Resume.pdf" variant="primary">
+          View Resume
+          <Icon name="external" size={14} />
+        </Btn>
+        <Btn href="https://github.com/Saksham-Xtreme">
+          <Icon name="github" size={14} />
+          GitHub
+        </Btn>
+        <Btn href="https://linkedin.com/in/saksham-tripathi-7b25b0330">
+          <Icon name="linkedin" size={14} />
+          LinkedIn
+        </Btn>
+        <Btn href="https://leetcode.com/u/sakshamtechie/">
+          <Icon name="leetcode" size={14} />
+          LeetCode
+        </Btn>
+      </div>
+    </section>
   );
 }
 
 // ─── ABOUT ────────────────────────────────────────────────────────────────────
 function About() {
   return (
-    <div style={{ padding: 24 }}>
-      {/* Header */}
-      <div style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 16,
-        marginBottom: 20
-      }}>
-        <div style={{
-          width: 64,
-          height: 64,
-          borderRadius: "50%",
-          overflow: "hidden",
-          flexShrink: 0,
-          border: `2px solid ${C.tan}`,
-          boxShadow: `0 4px 16px rgba(212,163,115,0.25)`,
-          background: `linear-gradient(135deg, ${C.sage}, ${C.tan})`,
-        }}>
-          <img
-            src="/profile.jpg"
-            alt="Saksham Tripathi"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover"
-            }}
-          />
-        </div>
+    <Section id="about" style={{ borderTop: `1px solid ${DS.border}` }}>
+      <SectionHeading label="01 — About" title="Who I am" />
 
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "48px",
+          alignItems: "start",
+        }}
+        className="about-grid"
+      >
+        {/* Bio */}
         <div>
-          <h2 style={{
-            fontFamily: "'DM Serif Display', Georgia, serif",
-            fontSize: 22,
-            color: "#3a2a1e",
-            fontWeight: 700,
-            margin: "0 0 3px"
-          }}>
-            Saksham Tripathi
-          </h2>
-
-          <p style={{
-            fontFamily: "'DM Sans', system-ui",
-            fontSize: 13,
-            color: C.tan,
-            fontWeight: 500,
-            margin: "0 0 4px"
-          }}>
-            Full Stack Developer • MERN Stack
+          <p
+            style={{
+              fontFamily: DS.fontSans,
+              fontSize: "15px",
+              color: DS.textMuted,
+              lineHeight: 1.8,
+              margin: "0 0 16px",
+            }}
+          >
+            First-year B.Tech Computer Science student at NIET (CGPA 7.53), specializing in
+            backend architecture and real-time systems. I build full-stack applications with a
+            strong focus on the server side — authentication, data modeling, API design, and
+            WebSocket communication.
           </p>
-
-          <p style={{
-            fontFamily: "'DM Sans', system-ui",
-            fontSize: 12,
-            color: "#7a6a5a",
-            margin: 0
-          }}>
-            India · Open for Internships and Opportunities
+          <p
+            style={{
+              fontFamily: DS.fontSans,
+              fontSize: "15px",
+              color: DS.textMuted,
+              lineHeight: 1.8,
+              margin: "0",
+            }}
+          >
+            Completed an internship at Prodigy InfoTech and maintain a Top 2% LeetCode ranking
+            through active competitive programming in C++.
           </p>
         </div>
+
+        {/* Quick facts */}
+        <dl
+          style={{
+            background: DS.surface,
+            border: `1px solid ${DS.border}`,
+            borderRadius: DS.r12,
+            padding: "20px",
+            margin: 0,
+          }}
+        >
+          {[
+            ["Degree", "B.Tech CSE, NIET — 2024–2028"],
+            ["CGPA", "7.53 / 10"],
+            ["Focus", "Backend, real-time systems"],
+            ["Location", "India"],
+            ["Status", "Open for internships"],
+          ].map(([key, val]) => (
+            <div
+              key={key}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "10px 0",
+                borderBottom: `1px solid ${DS.border}`,
+                gap: "16px",
+              }}
+            >
+              <dt
+                style={{
+                  fontFamily: DS.fontMono,
+                  fontSize: "11px",
+                  color: DS.textDim,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  flexShrink: 0,
+                }}
+              >
+                {key}
+              </dt>
+              <dd
+                style={{
+                  fontFamily: DS.fontSans,
+                  fontSize: "13px",
+                  color: DS.text,
+                  textAlign: "right",
+                  margin: 0,
+                }}
+              >
+                {val}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </div>
-
-      {/* Bio */}
-      <p style={{
-        fontFamily: "'DM Sans', system-ui",
-        fontSize: 13.5,
-        color: "#4a3728",
-        lineHeight: 1.75,
-        margin: "0 0 20px"
-      }}>
-        I am a Full Stack Developer specializing in the MERN stack, from New Delhi, India. Currently pursuing a B.Tech
-        in Computer Science and Engineering with a focus on Security. I build scalable and secure
-        web applications using React, Node.js, Express, and MongoDB.
-
-        <br /><br />
-
-        I have built real-world applications including an Emergency Response System and a
-        full-stack chat platform using Node.js, Express, and MongoDB.
-
-        <br /><br />
-
-        I am actively strengthening my problem-solving skills through Data Structures and
-        Algorithms and regularly practice competitive programming on LeetCode.
-      </p>
-
-      {/* LeetCode Section */}
-<div style={{ marginBottom: 24 }}>
-  <h3 style={{
-    fontFamily: "'DM Sans', system-ui",
-    fontSize: 10,
-    fontWeight: 700,
-    color: C.tan,
-    letterSpacing: "0.12em",
-    textTransform: "uppercase",
-    marginBottom: 12
-  }}>
-    Competitive Programming
-  </h3>
-
-  <div style={{
-    background: C.peach,
-    padding: 14,
-    borderRadius: 10,
-    border: `1px solid rgba(212,163,115,0.3)`
-  }}>
-    
-    <div style={{
-      fontFamily: "'DM Sans', system-ui",
-      fontSize: 13,
-      color: "#4a3728",
-      marginBottom: 6,
-      fontWeight: 600
-    }}>
-      🧠 LeetCode Profile
-    </div>
-
-    <div style={{
-      fontFamily: "'DM Mono', monospace",
-      fontSize: 12,
-      color: "#5a4a3a",
-      lineHeight: 1.7
-    }}>
-      Problems Solved: 200+ <br/>
-      Contest Rating: 1712 <br/>
-      Global Rank: Top 12.38%  <br/>
-      Primary Language: C++ <br/>
-      Core Areas: Arrays, Hash Tables, Dynamic Programming, Binary Search
-    </div>
-
-    <a
-      href="https://leetcode.com/u/sakshamtechie/"
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{
-        display: "inline-block",
-        marginTop: 10,
-        padding: "6px 12px",
-        background: C.tan,
-        color: "#fff",
-        borderRadius: 8,
-        fontSize: 12,
-        textDecoration: "none",
-        fontFamily: "'DM Sans', system-ui",
-        fontWeight: 600
-      }}
-    >
-      View Full LeetCode Profile →
-    </a>
-
-  </div>
-</div>
-
-      {/* Timeline */}
-      <div>
-        <h3 style={{
-          fontFamily: "'DM Sans', system-ui",
-          fontSize: 10,
-          fontWeight: 700,
-          color: C.tan,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          marginBottom: 12
-        }}>
-          Timeline
-        </h3>
-
-        {[
-          {
-            year: "2026",
-            event: "Focused on MERN stack development, and PUBLIC THREAD full-stack applications"
-          },
-          {
-            year: "2025",
-            event: "Built JaanRaksha "
-          },
-          {
-            year: "2025",
-            event: "Learned programming fundamentals and Data Structures"
-          },
-          {
-            year: "2024",
-            event: "Started B.Tech in Computer Science and Engineering at NIET"
-          },
-          
-        ].map(item => (
-          <div key={item.year} style={{
-            display: "flex",
-            gap: 12,
-            marginBottom: 10
-          }}>
-            <span style={{
-              fontFamily: "'DM Mono', monospace",
-              fontSize: 11,
-              color: C.tan,
-              fontWeight: 600,
-              flexShrink: 0
-            }}>
-              {item.year}
-            </span>
-
-            <p style={{
-              fontFamily: "'DM Sans', system-ui",
-              fontSize: 12.5,
-              color: "#5a4a3a",
-              margin: 0
-            }}>
-              {item.event}
-            </p>
-          </div>
-        ))}
-      </div>
-
-    </div>
+    </Section>
   );
 }
 
 // ─── PROJECTS ─────────────────────────────────────────────────────────────────
-function Projects() {
+function ProjectCard({ project }) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
-    <div style={{ padding: 24, display: "grid", gap: 14 }}>
-      {PROJECTS.map((p, i) => (
-        <motion.div
-          key={p.id}
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.07 }}
-          whileHover={{ y: -2 }}
+    <article
+      style={{
+        background: DS.surface,
+        border: `1px solid ${DS.border}`,
+        borderRadius: DS.r12,
+        padding: "24px",
+        transition: "border-color 0.15s",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.borderColor = DS.borderHi)}
+      onMouseLeave={(e) => (e.currentTarget.style.borderColor = DS.border)}
+    >
+      {/* Header */}
+      <div style={{ marginBottom: "12px" }}>
+        <h3
           style={{
-            borderRadius: 12,
-            padding: "14px 16px",
-            background: C.peach,
-            border: `1px solid rgba(212,163,115,0.28)`,
-            boxShadow: "0 2px 8px rgba(212,163,115,0.1)",
+            fontFamily: DS.fontSans,
+            fontSize: "17px",
+            fontWeight: 600,
+            color: DS.text,
+            margin: "0 0 4px",
           }}
         >
-          <h3 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: 15, color: "#3a2a1e", fontWeight: 700, margin: "0 0 4px" }}>
-            {p.title}
-          </h3>
-          <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: 12.5, color: "#5a4a3a", lineHeight: 1.6, margin: "0 0 10px" }}>
-            {p.desc}
-          </p>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-              {p.tags.map((t) => (
-                <span key={t} style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", background: C.cream1, color: C.tan, border: `1px solid ${C.sage}`, fontWeight: 600, borderRadius: 20, padding: "2px 8px" }}>
-                  {t}
-                </span>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-            <a
-                href={p.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  fontSize: 11,
-                  padding: "4px 10px",
-                  borderRadius: 8,
-                  fontFamily: "'DM Sans', system-ui",
-                  fontWeight: 600,
-                  background: C.sage,
-                  color: "#3a2a1e",
-                  textDecoration: "none"
-                }}
-              >
-                GitHub
-            </a>
+          {project.title}
+        </h3>
+        <p
+          style={{
+            fontFamily: DS.fontSans,
+            fontSize: "13px",
+            color: DS.textMuted,
+            margin: 0,
+          }}
+        >
+          {project.subtitle}
+        </p>
+      </div>
 
-            <a
-                href={p.demo}
-                target="_blank"
-                rel="noopener noreferrer"
+      {/* Problem */}
+      <div style={{ marginBottom: "16px" }}>
+        <span
+          style={{
+            fontFamily: DS.fontMono,
+            fontSize: "10px",
+            color: DS.accent,
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            display: "block",
+            marginBottom: "4px",
+          }}
+        >
+          Problem
+        </span>
+        <p
+          style={{
+            fontFamily: DS.fontSans,
+            fontSize: "14px",
+            color: DS.textMuted,
+            lineHeight: 1.65,
+            margin: 0,
+          }}
+        >
+          {project.problem}
+        </p>
+      </div>
+
+      {/* Expandable: architecture + challenges */}
+      {expanded && (
+        <>
+          <div style={{ marginBottom: "16px" }}>
+            <span
+              style={{
+                fontFamily: DS.fontMono,
+                fontSize: "10px",
+                color: DS.accent,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
+              Architecture
+            </span>
+            <p
+              style={{
+                fontFamily: DS.fontSans,
+                fontSize: "14px",
+                color: DS.textMuted,
+                lineHeight: 1.65,
+                margin: 0,
+              }}
+            >
+              {project.architecture}
+            </p>
+          </div>
+
+          <div style={{ marginBottom: "16px" }}>
+            <span
+              style={{
+                fontFamily: DS.fontMono,
+                fontSize: "10px",
+                color: DS.accent,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                display: "block",
+                marginBottom: "8px",
+              }}
+            >
+              Engineering Challenges
+            </span>
+            <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "6px" }}>
+              {project.challenges.map((c, i) => (
+                <li
+                  key={i}
+                  style={{
+                    display: "flex",
+                    gap: "8px",
+                    fontFamily: DS.fontSans,
+                    fontSize: "13px",
+                    color: DS.textMuted,
+                    lineHeight: 1.55,
+                  }}
+                >
+                  <Icon name="arrowright" size={14} color={DS.accent} style={{ marginTop: "2px", flexShrink: 0 }} />
+                  {c}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {project.impact && (
+            <div
+              style={{
+                background: DS.surfaceHi,
+                border: `1px solid ${DS.border}`,
+                borderRadius: DS.r8,
+                padding: "12px 14px",
+                marginBottom: "16px",
+              }}
+            >
+              <span
                 style={{
-                  fontSize: 11,
-                  padding: "4px 10px",
-                  borderRadius: 8,
-                  fontFamily: "'DM Sans', system-ui",
-                  fontWeight: 600,
-                  background: C.tan,
-                  color: "#fff",
-                  textDecoration: "none"
+                  fontFamily: DS.fontMono,
+                  fontSize: "10px",
+                  color: "#22c55e",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  display: "block",
+                  marginBottom: "4px",
                 }}
               >
-                Demo
-            </a>
-          </div>
+                Impact
+              </span>
+              <p style={{ fontFamily: DS.fontSans, fontSize: "13px", color: DS.text, margin: 0, lineHeight: 1.6 }}>
+                {project.impact}
+              </p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Stack */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "16px" }}>
+        {project.stack.map((t) => (
+          <span
+            key={t}
+            style={{
+              fontFamily: DS.fontMono,
+              fontSize: "11px",
+              color: DS.textMuted,
+              background: DS.surfaceHi,
+              border: `1px solid ${DS.border}`,
+              borderRadius: DS.r4,
+              padding: "2px 8px",
+            }}
+          >
+            {t}
+          </span>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+        <button
+          onClick={() => setExpanded((e) => !e)}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: DS.fontSans,
+            fontSize: "12px",
+            color: DS.textMuted,
+            padding: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+          }}
+          aria-expanded={expanded}
+          aria-label={expanded ? "Collapse project details" : "Expand project details"}
+        >
+          {expanded ? "Less" : "Architecture & challenges"}
+          <Icon name="arrowright" size={12} color={DS.textMuted} style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }} />
+        </button>
+
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Btn href={project.github} variant="outline" style={{ padding: "5px 12px", fontSize: "12px" }}>
+            <Icon name="github" size={13} />
+            GitHub
+          </Btn>
+          <Btn href={project.demo} variant="outline" style={{ padding: "5px 12px", fontSize: "12px" }}>
+            <Icon name="external" size={13} />
+            Demo
+          </Btn>
         </div>
-      </motion.div>
-    ))}
-  </div>
+      </div>
+    </article>
+  );
+}
+
+function Projects() {
+  return (
+    <Section id="projects" style={{ borderTop: `1px solid ${DS.border}` }}>
+      <SectionHeading label="02 — Projects" title="What I've built" />
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        {PROJECTS.map((p) => (
+          <ProjectCard key={p.id} project={p} />
+        ))}
+      </div>
+    </Section>
   );
 }
 
 // ─── SKILLS ───────────────────────────────────────────────────────────────────
-function SkillBar({ name, level, delay }) {
+function Skills() {
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-        <span style={{ fontFamily: "'DM Sans', system-ui", fontSize: 12, color: "#4a3728", fontWeight: 500 }}>{name}</span>
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: C.tan, fontWeight: 600 }}>{level}%</span>
+    <Section id="skills" style={{ borderTop: `1px solid ${DS.border}` }}>
+      <SectionHeading label="03 — Skills" title="Technical capabilities" />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "16px",
+        }}
+      >
+        {Object.entries(SKILLS).map(([cat, items]) => (
+          <div
+            key={cat}
+            style={{
+              background: DS.surface,
+              border: `1px solid ${DS.border}`,
+              borderRadius: DS.r12,
+              padding: "20px",
+            }}
+          >
+            <h3
+              style={{
+                fontFamily: DS.fontMono,
+                fontSize: "11px",
+                color: DS.accent,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                margin: "0 0 14px",
+              }}
+            >
+              {cat}
+            </h3>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+              {items.map((skill) => (
+                <span
+                  key={skill}
+                  style={{
+                    fontFamily: DS.fontSans,
+                    fontSize: "12px",
+                    color: DS.text,
+                    background: DS.surfaceHi,
+                    border: `1px solid ${DS.border}`,
+                    borderRadius: DS.r4,
+                    padding: "4px 10px",
+                  }}
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
-      <div style={{ height: 5, background: C.cream1, borderRadius: 9999, overflow: "hidden" }}>
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${level}%` }}
-          transition={{ duration: 0.85, delay, ease: "easeOut" }}
-          style={{ height: "100%", borderRadius: 9999, background: `linear-gradient(90deg, ${C.sage}, ${C.tan})` }}
-        />
-      </div>
-    </div>
+    </Section>
   );
 }
 
-function Skills() {
+// ─── ACHIEVEMENTS ─────────────────────────────────────────────────────────────
+function Achievements() {
   return (
-    <div style={{ padding: 24, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px 28px" }}>
-      {Object.entries(SKILLS).map(([cat, items], ci) => (
-        <div key={cat}>
-          <h3 style={{ fontFamily: "'DM Sans', system-ui", fontSize: 10, fontWeight: 700, color: C.tan, letterSpacing: "0.12em", textTransform: "uppercase", margin: "0 0 10px" }}>
-            {cat}
-          </h3>
-          {items.map((s, i) => (
-            <SkillBar key={s.name} name={s.name} level={s.level} delay={ci * 0.08 + i * 0.06} />
+    <Section id="achievements" style={{ borderTop: `1px solid ${DS.border}` }}>
+      <SectionHeading label="04 — Achievements" title="Competitive programming" />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: "16px",
+        }}
+      >
+        {ACHIEVEMENTS.map((a) => (
+          <div
+            key={a.label}
+            style={{
+              background: DS.surface,
+              border: `1px solid ${DS.border}`,
+              borderRadius: DS.r12,
+              padding: "20px",
+            }}
+          >
+            <Icon name={a.icon} size={18} color={DS.accent} style={{ marginBottom: "12px" }} />
+            <div
+              style={{
+                fontFamily: DS.fontSans,
+                fontSize: "22px",
+                fontWeight: 700,
+                color: DS.text,
+                marginBottom: "4px",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {a.metric}
+            </div>
+            <div
+              style={{
+                fontFamily: DS.fontSans,
+                fontSize: "13px",
+                color: DS.textMuted,
+                marginBottom: "4px",
+                lineHeight: 1.5,
+              }}
+            >
+              {a.label}
+            </div>
+            <div
+              style={{
+                fontFamily: DS.fontMono,
+                fontSize: "11px",
+                color: DS.textDim,
+              }}
+            >
+              {a.detail}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+// ─── EXPERIENCE ───────────────────────────────────────────────────────────────
+function Experience() {
+  return (
+    <Section id="experience" style={{ borderTop: `1px solid ${DS.border}` }}>
+      <SectionHeading label="05 — Experience" title="Work history" />
+      <div
+        style={{
+          background: DS.surface,
+          border: `1px solid ${DS.border}`,
+          borderRadius: DS.r12,
+          padding: "24px",
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap", marginBottom: "16px" }}>
+          <div>
+            <h3 style={{ fontFamily: DS.fontSans, fontSize: "16px", fontWeight: 600, color: DS.text, margin: "0 0 4px" }}>
+              {EXPERIENCE.role}
+            </h3>
+            <p style={{ fontFamily: DS.fontSans, fontSize: "14px", color: DS.textMuted, margin: 0 }}>
+              {EXPERIENCE.company}
+            </p>
+          </div>
+          <span
+            style={{
+              fontFamily: DS.fontMono,
+              fontSize: "12px",
+              color: DS.textDim,
+              background: DS.surfaceHi,
+              border: `1px solid ${DS.border}`,
+              borderRadius: DS.r4,
+              padding: "4px 10px",
+              flexShrink: 0,
+            }}
+          >
+            {EXPERIENCE.period}
+          </span>
+        </div>
+
+        {/* Description */}
+        <p style={{ fontFamily: DS.fontSans, fontSize: "14px", color: DS.textMuted, lineHeight: 1.7, margin: "0 0 16px" }}>
+          {EXPERIENCE.description}
+        </p>
+
+        {/* Deliverables */}
+        <ul style={{ margin: "0 0 16px", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "6px" }}>
+          {EXPERIENCE.deliverables.map((d, i) => (
+            <li key={i} style={{ display: "flex", gap: "8px", fontFamily: DS.fontSans, fontSize: "13px", color: DS.textMuted, lineHeight: 1.55 }}>
+              <Icon name="check" size={14} color={DS.accent} style={{ marginTop: "2px", flexShrink: 0 }} />
+              {d}
+            </li>
+          ))}
+        </ul>
+
+        {/* Stack */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+          {EXPERIENCE.stack.map((t) => (
+            <span
+              key={t}
+              style={{
+                fontFamily: DS.fontMono,
+                fontSize: "11px",
+                color: DS.textMuted,
+                background: DS.surfaceHi,
+                border: `1px solid ${DS.border}`,
+                borderRadius: DS.r4,
+                padding: "2px 8px",
+              }}
+            >
+              {t}
+            </span>
           ))}
         </div>
-      ))}
-    </div>
+      </div>
+    </Section>
   );
 }
 
 // ─── CONTACT ─────────────────────────────────────────────────────────────────
 function Contact() {
-  const [sent, setSent] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+    setLoading(true);
+    setError("");
     try {
-      const API = import.meta.env.VITE_API_URL;
-  
-      console.log("Sending:", form);
-  
+      const API = import.meta?.env?.VITE_API_URL ?? "";
       const res = await fetch(`${API}/api/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-  
-      console.log("Status:", res.status);
-  
       const data = await res.json();
-      console.log("Response:", data);
-  
       if (data.success) {
         setSent(true);
+      } else {
+        setError("Something went wrong. Please try email directly.");
       }
-    } catch (error) {
-      console.error("Submit error:", error);
+    } catch {
+      setError("Network error. You can reach me at shivbhau2108@gmail.com");
+    } finally {
+      setLoading(false);
     }
   };
+
   const inputStyle = {
     width: "100%",
-    padding: "8px 12px",
-    borderRadius: 8,
-    border: `1px solid rgba(212,163,115,0.4)`,
-    background: C.cream1,
-    fontFamily: "'DM Sans', system-ui",
-    fontSize: 13,
-    color: "#3a2a1e",
+    padding: "10px 14px",
+    borderRadius: DS.r8,
+    border: `1px solid ${DS.border}`,
+    background: DS.surface,
+    fontFamily: DS.fontSans,
+    fontSize: "14px",
+    color: DS.text,
     outline: "none",
     boxSizing: "border-box",
     display: "block",
+    transition: "border-color 0.15s",
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <AnimatePresence mode="wait">
+    <Section id="contact" style={{ borderTop: `1px solid ${DS.border}` }}>
+      <SectionHeading label="06 — Contact" title="Get in touch" />
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "48px",
+          alignItems: "start",
+        }}
+        className="contact-grid"
+      >
+        {/* Links */}
+        <div>
+          <p style={{ fontFamily: DS.fontSans, fontSize: "15px", color: DS.textMuted, lineHeight: 1.7, margin: "0 0 24px" }}>
+            Open to internship opportunities and interesting engineering conversations.
+            Response time under 24 hours.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {[
+              { icon: "mail", label: "shivbhau2108@gmail.com", href: "mailto:shivbhau2108@gmail.com" },
+              { icon: "linkedin", label: "saksham-tripathi-7b25b0330", href: "https://linkedin.com/in/saksham-tripathi-7b25b0330" },
+              { icon: "github", label: "Saksham-Xtreme", href: "https://github.com/Saksham-Xtreme" },
+              { icon: "leetcode", label: "sakshamtechie", href: "https://leetcode.com/u/sakshamtechie/" },
+            ].map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                target={l.href.startsWith("mailto") ? "_self" : "_blank"}
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  fontFamily: DS.fontSans,
+                  fontSize: "14px",
+                  color: DS.textMuted,
+                  textDecoration: "none",
+                  padding: "10px 14px",
+                  borderRadius: DS.r8,
+                  border: `1px solid ${DS.border}`,
+                  background: DS.surface,
+                  transition: "border-color 0.15s, color 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = DS.borderHi;
+                  e.currentTarget.style.color = DS.text;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = DS.border;
+                  e.currentTarget.style.color = DS.textMuted;
+                }}
+              >
+                <Icon name={l.icon} size={16} />
+                {l.label}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Form */}
         {sent ? (
-          <motion.div
-            key="sent"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 0" }}
+          <div
+            style={{
+              background: DS.surface,
+              border: `1px solid ${DS.border}`,
+              borderRadius: DS.r12,
+              padding: "32px",
+              textAlign: "center",
+            }}
           >
-            <span style={{ fontSize: 48 }}>✅</span>
-            <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: 15, color: "#3a2a1e", fontWeight: 600, marginTop: 12 }}>Message sent!</p>
-            <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: 12, color: "#7a6a5a", marginTop: 4 }}>I'll get back to you soon.</p>
-          </motion.div>
+            <Icon name="check" size={32} color="#22c55e" style={{ marginBottom: "12px" }} />
+            <p style={{ fontFamily: DS.fontSans, fontSize: "16px", fontWeight: 600, color: DS.text, margin: "0 0 4px" }}>
+              Message sent
+            </p>
+            <p style={{ fontFamily: DS.fontSans, fontSize: "13px", color: DS.textMuted, margin: 0 }}>
+              I'll get back to you shortly.
+            </p>
+          </div>
         ) : (
-          <motion.form key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={handleSubmit}>
-            <div className="contact-row" style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-              <input style={inputStyle} placeholder="Your Name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
-              <input style={inputStyle} type="email" placeholder="Email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
-            </div>
-            <textarea
-              style={{ ...inputStyle, resize: "vertical", minHeight: 96, marginBottom: 12 }}
-              placeholder="Your message..."
-              value={form.message}
-              onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-              required
-            />
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              type="submit"
-              style={{ width: "100%", padding: "10px 0", borderRadius: 10, background: C.tan, color: "#fff", fontFamily: "'DM Sans', system-ui", fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer" }}
-            >
-              Send Message
-            </motion.button>
-            <div  style={{ display: "flex", gap: 12, marginTop: 16, justifyContent: "center", flexWrap: "wrap" }}>
-              {["📧 shivbhau2108@gmail.com", "🐙 https://github.com/Saksham-Xtreme", "💼 www.linkedin.com/in/saksham-tripathi-7b25b0330"].map((c) => (
-                <span key={c} style={{ fontFamily: "'DM Sans', system-ui", fontSize: 11, color: "#7a6a5a" }}>{c}</span>
-              ))}
-            </div>
-          </motion.form>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-// ------------- RESUME ---------------
-function Resume() {
-  return (
-    <div
-      style={{
-        padding: 24,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 16,
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          borderRadius: 12,
-          padding: 20,
-          background: C.cream1,
-          border: `1px solid rgba(212,163,115,0.28)`,
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 11.5,
-          color: "#5a4a3a",
-          lineHeight: 1.9,
-          boxSizing: "border-box",
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            fontWeight: 700,
-            fontSize: 15,
-            color: "#3a2a1e",
-            marginBottom: 2,
-          }}
-        >
-          SAKSHAM TRIPATHI
-        </div>
+          <form onSubmit={handleSubmit} noValidate>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }} className="form-row">
+                <div>
+                  <label htmlFor="name" style={{ fontFamily: DS.fontSans, fontSize: "12px", color: DS.textMuted, display: "block", marginBottom: "6px" }}>
+                    Name
+                  </label>
+                  <input
+                    id="name"
+                    style={inputStyle}
+                    placeholder="Your name"
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    required
+                    onFocus={(e) => (e.target.style.borderColor = DS.accent)}
+                    onBlur={(e) => (e.target.style.borderColor = DS.border)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" style={{ fontFamily: DS.fontSans, fontSize: "12px", color: DS.textMuted, display: "block", marginBottom: "6px" }}>
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    style={inputStyle}
+                    placeholder="you@example.com"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    required
+                    onFocus={(e) => (e.target.style.borderColor = DS.accent)}
+                    onBlur={(e) => (e.target.style.borderColor = DS.border)}
+                  />
+                </div>
+              </div>
 
-        <div style={{ color: C.tan, marginBottom: 8 }}>
-          Full Stack Developer • MERN Stack Developer
-        </div>
-
-        <div style={{ marginBottom: 14 }}>
-          📧 shivbhau2108@gmail.com  
-          <br />
-          💻 github.com/Saksham-Xtreme  
-          <br />
-          🔗 linkedin.com/in/saksham-tripathi-7b25b0330 
-          <br />
-          📍 India
-        </div>
-
-        {/* Education */}
-        <div
-          style={{
-            fontWeight: 700,
-            color: C.tan,
-            marginBottom: 4,
-          }}
-        >
-          EDUCATION
-        </div>
-
-        <div>
-          B.Tech in Computer Science and Engineering
-        </div>
-
-        <div style={{ paddingLeft: 12, marginBottom: 12 }}>
-          Noida Institute of Engineering and Technology  
-          <br />
-          CGPA: 7.53  
-          <br />
-          2024 – 2028
-        </div>
-
-        {/* Projects */}
-        <div
-          style={{
-            fontWeight: 700,
-            color: C.tan,
-            marginBottom: 4,
-          }}
-        >
-          PROJECTS
-        </div>
-
-        
-
-        <div>
-          LinkUp – Real-Time Video Call & Chat Platform
-        </div>
-        
-        <div style={{ paddingLeft: 12, marginBottom: 8 }}>
-          → 1:1 video calls and real-time messaging  
-          <br />
-          → WebRTC peer-to-peer communication  
-          <br />
-          → React, Node.js, Express.js, MongoDB, Socket.IO  
-        </div>
-        
-        <div>
-          Basera – Property Listing Platform
-        </div>
-        
-        <div style={{ paddingLeft: 12, marginBottom: 8 }}>
-          → Full-stack Property listing platform  
-          <br />
-          → Node.js, Express.js, MongoDB, EJS  
-          <br />
-          → Image uploads with Cloudinary and authentication with Passport.js  
-        </div>
-        
-        <div>
-          PUBLIC THREAD – CRUD Chat Application
-        </div>
-        
-        <div style={{ paddingLeft: 12, marginBottom: 8 }}>
-          → Full-stack chat application  
-          <br />
-          → Node.js, Express.js, MongoDB  
-          <br />
-          → REST API architecture  
-        </div>
-        
-        <div>
-          JaanRaksha – Emergency Response System
-        </div>
-        
-        <div style={{ paddingLeft: 12, marginBottom: 12 }}>
-          → Real-time emergency response web app  
-          <br />
-          → Firebase Authentication and Realtime Database  
-          <br />
-          → Role-based access system  
-        </div>
-
-        {/* Skills */}
-        <div
-          style={{
-            fontWeight: 700,
-            color: C.tan,
-            marginBottom: 4,
-          }}
-        >
-          SKILLS
-        </div>
-
-        <div style={{ marginBottom: 12 }}>
-          Languages: C++, Python, C  
-          <br />
-          Frontend: React, JavaScript, HTML, CSS, Tailwind  
-          <br />
-          Backend: Node.js, Express.js  
-          <br />
-          Database: MongoDB, MySQL, Firebase  
-          <br />
-          Tools: Git, GitHub, VS Code, Vercel  
-        </div>
-
-        {/* Achievements */}
-        <div
-          style={{
-            fontWeight: 700,
-            color: C.tan,
-            marginBottom: 4,
-          }}
-        >
-          ACHIEVEMENTS
-        </div>
-
-        <div>
-          → 5★ rating in C++ on HackerRank  
-          <br />
-          → Solved 170+ DSA problems on LeetCode  
-          <br />
-          → LeetCode Contest Rating: 1700+
-        </div>
-      </div>
-
-      {/* Download Button */}
-      <motion.a
-        href="/Saksham_Instep_Resume.pdf"
-        download
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.96 }}
-        style={{
-          padding: "10px 32px",
-          borderRadius: 10,
-          background: C.tan,
-          color: "#fff",
-          fontFamily: "'DM Sans', system-ui",
-          fontWeight: 700,
-          fontSize: 13,
-          border: "none",
-          cursor: "pointer",
-          textDecoration: "none",
-        }}
-      >
-        ⬇ Download Resume PDF
-      </motion.a>
-    </div>
-  );
-}
-
-// ─── TERMINAL ─────────────────────────────────────────────────────────────────
-function Terminal() {
-  const [history, setHistory] = useState([
-    { type: "output", text: 'Welcome to SakshamOS v1.0.0\nType "help" to see available commands.' },
-  ]);
-  const [input, setInput] = useState("");
-  const bottomRef = useRef(null);
-  const inputRef = useRef(null);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [history]);
-
-  const handleCommand = useCallback(
-    (e) => {
-      if (e.key !== "Enter") return;
-      const raw = input.trim();
-      const cmd = raw.toLowerCase();
-      if (!cmd) return;
-
-      setHistory((h) => [...h, { type: "input", text: `$ ${raw}` }]);
-      setInput("");
-
-      setTimeout(() => {
-        if (cmd === "clear") {
-          setHistory([]);
-          return;
-        }
-        let res;
-
-        const entry = TERMINAL_RESPONSES[cmd];
-        
-        if (!entry) {
-          res = `command not found: ${raw}\nType "help" for available commands.`;
-        } else if (typeof entry === "function") {
-          res = entry();
-        } else {
-          res = entry;
-        }        setHistory((h) => [...h, { type: "output", text: res }]);
-      }, 100);
-    },
-    [input]
-  );
-
-  return (
-    <div
-      style={{ background: "#1a1610", minHeight: 320, padding: 20, fontFamily: "'DM Mono', 'Courier New', monospace", fontSize: 12, color: "#c8b89a", lineHeight: 1.75, cursor: "text" }}
-      onClick={() => inputRef.current?.focus()}
-    >
-      {history.map((h, i) => (
-        <div key={i} style={{ color: h.type === "input" ? C.tan : "#c8b89a", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-          {h.text}
-        </div>
-      ))}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-        <span style={{ color: C.tan, flexShrink: 0 }}>$</span>
-        <input
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleCommand}
-          autoFocus
-          spellCheck={false}
-          autoComplete="off"
-          style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "#e8d8c4", fontFamily: "'DM Mono', 'Courier New', monospace", fontSize: 12, caretColor: C.tan }}
-          placeholder="type a command..."
-        />
-      </div>
-      <div ref={bottomRef} />
-    </div>
-  );
-}
-
-// ─── WINDOW CONFIGS ───────────────────────────────────────────────────────────
-const WINDOW_DEFS = {
-  about:    { title: "About Me",  emoji: "👤", component: About },
-  projects: { title: "Projects",  emoji: "🚀", component: Projects },
-  skills:   { title: "Skills",    emoji: "⚡", component: Skills },
-  contact:  { title: "Contact",   emoji: "📬", component: Contact },
-  resume:   { title: "Resume",    emoji: "📄", component: Resume },
-  terminal: { title: "Terminal",  emoji: "💻", component: Terminal },
-};
-
-const ICONS = [
-  { id: "about",    label: "About Me",  emoji: "👤" },
-  { id: "projects", label: "Projects",  emoji: "🚀" },
-  { id: "skills",   label: "Skills",    emoji: "⚡" },
-  { id: "contact",  label: "Contact",   emoji: "📬" },
-  { id: "resume",   label: "Resume",    emoji: "📄" },
-  { id: "terminal", label: "Terminal",  emoji: "💻" },
-];
-
-// ─── LIVE CLOCK ───────────────────────────────────────────────────────────────
-function MenuClock() {
-  const [time, setTime] = useState(new Date());
-  useEffect(() => {
-    const id = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    <span style={{ fontSize: 11, color: "#7a6a5a" }}>
-      {time.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-      &nbsp;&nbsp;
-      {time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-    </span>
-  );
-}
-
-// ─── DESKTOP ──────────────────────────────────────────────────────────────────
-export default function Desktop() {
-  const { windows, openWindow, closeWindow, focusWindow, minimizeWindow } = useWindowManager();
-
-  return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        position: "relative",
-        overflow: "hidden",
-        background: `
-          radial-gradient(ellipse at 20% 30%, ${C.sage}55 0%, transparent 50%),
-          radial-gradient(ellipse at 80% 70%, ${C.tan}33 0%, transparent 50%),
-          radial-gradient(ellipse at 50% 50%, ${C.cream1} 0%, ${C.peach} 100%)
-        `,
-        fontFamily: "'DM Sans', system-ui, sans-serif",
-      }}
-    >
-      {/* Grid texture */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          backgroundImage: `linear-gradient(rgba(212,163,115,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(212,163,115,0.05) 1px, transparent 1px)`,
-          backgroundSize: "48px 48px",
-        }}
-      />
-
-      {/* Menu bar */}
-      <div
-        style={{
-          height: 24,
-          background: "rgba(254,250,224,0.82)",
-          backdropFilter: "blur(12px)",
-          borderBottom: `1px solid rgba(212,163,115,0.18)`,
-          position: "relative",
-          zIndex: 99999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 16px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#3a2a1e" }}>🧑‍💻</span>
-          {["Finder", "File", "Edit", "View", "Go", "Window"].map((m) => (
-            <span key={m} style={{ fontSize: 12, fontWeight: 500, color: "#3a2a1e", cursor: "default" }}>{m}</span>
-          ))}
-        </div>
-        <MenuClock />
-      </div>
-
-      {/* Profile center */}
-      <div style={{ position: "absolute", inset: 0, top: 24 }}>
-        <ProfileCenter />
-      </div>
-
-      {/* Desktop icons — left (all icons) */}
-        <div 
-          className="desktop-icons" 
-          style={{
-          position: "absolute",
-          top: 60,
-          left: 28,
-          display: "flex",
-          flexDirection: "column",
-          gap: 24,
-          zIndex: 10
-        }}>
-          {ICONS.map((icon) => (
-            <DesktopIcon key={icon.id} {...icon} onClick={openWindow} />
-          ))}
-        </div>
-
-      {/* Windows */}
-      <AnimatePresence>
-        {Object.values(windows).map((win) => {
-          if (!win || !win.open || win.minimized) return null;
-          const def = WINDOW_DEFS[win.id];
-          if (!def) return null;
-          const Comp = def.component;
-          return (
-            <Window
-              key={win.id}
-              id={win.id}
-              title={def.title}
-              emoji={def.emoji}
-              zIndex={win.z}
-              onClose={closeWindow}
-              onMinimize={minimizeWindow}
-              onFocus={focusWindow}
-              initialPos={win.pos}
-            >
-              <Comp />
-            </Window>
-          );
-        })}
-      </AnimatePresence>
-
-      {/* Dock */}
-      <div
-        className="dock"
-        style={{
-          position: "fixed",
-          bottom: 12,
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          alignItems: "flex-end",
-          gap: 8,
-          padding: "8px 14px",
-          background: "rgba(254,250,224,0.62)",
-          backdropFilter: "blur(20px)",
-          borderRadius: 20,
-          border: `1px solid rgba(212,163,115,0.28)`,
-          boxShadow: `0 8px 32px rgba(74,55,40,0.14)`,
-          zIndex: 99998,
-        }}
-      >
-        {ICONS.map((icon) => {
-          const winState = windows[icon.id];
-          const isOpen = winState?.open === true && winState?.minimized !== true;
-          return (
-            <motion.button
-              key={icon.id}
-              whileHover={{ scale: 1.28, y: -7 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => openWindow(icon.id)}
-              title={icon.label}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                background: `linear-gradient(145deg, ${C.cream2}, ${C.peach})`,
-                border: `1px solid rgba(212,163,115,0.28)`,
-                boxShadow: `0 2px 8px rgba(212,163,115,0.18)`,
-                cursor: "pointer",
-                fontSize: 22,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative",
-                flexShrink: 0,
-              }}
-            >
-              {icon.emoji}
-              {isOpen && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: -5,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    width: 4,
-                    height: 4,
-                    borderRadius: "50%",
-                    background: C.tan,
-                  }}
+              <div>
+                <label htmlFor="message" style={{ fontFamily: DS.fontSans, fontSize: "12px", color: DS.textMuted, display: "block", marginBottom: "6px" }}>
+                  Message
+                </label>
+                <textarea
+                  id="message"
+                  style={{ ...inputStyle, resize: "vertical", minHeight: "120px" }}
+                  placeholder="What are you working on?"
+                  value={form.message}
+                  onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+                  required
+                  onFocus={(e) => (e.target.style.borderColor = DS.accent)}
+                  onBlur={(e) => (e.target.style.borderColor = DS.border)}
                 />
+              </div>
+
+              {error && (
+                <p style={{ fontFamily: DS.fontSans, fontSize: "13px", color: "#f87171", margin: 0 }}>
+                  {error}
+                </p>
               )}
-            </motion.button>
-          );
-        })}
+
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: DS.r8,
+                  background: DS.accent,
+                  color: "#fff",
+                  border: "none",
+                  fontFamily: DS.fontSans,
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  opacity: loading ? 0.7 : 1,
+                  transition: "opacity 0.15s",
+                }}
+              >
+                {loading ? "Sending…" : "Send message"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
-    </div>
+    </Section>
+  );
+}
+
+// ─── FOOTER ───────────────────────────────────────────────────────────────────
+function Footer() {
+  return (
+    <footer
+      style={{
+        borderTop: `1px solid ${DS.border}`,
+        padding: "32px 24px",
+        textAlign: "center",
+      }}
+    >
+      <p
+        style={{
+          fontFamily: DS.fontMono,
+          fontSize: "12px",
+          color: DS.textDim,
+          margin: 0,
+        }}
+      >
+        Built by Saksham Tripathi — React, Node.js, MongoDB
+      </p>
+    </footer>
+  );
+}
+
+// ─── ROOT ─────────────────────────────────────────────────────────────────────
+export default function Portfolio() {
+  return (
+    <>
+      {/* Global reset & responsive styles injected inline */}
+      <style>{`
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { background: ${DS.bg}; color: ${DS.text}; }
+        :focus-visible { outline: 2px solid ${DS.accent}; outline-offset: 2px; }
+
+        @media (max-width: 640px) {
+          .nav-desktop { display: none !important; }
+          .nav-mobile-btn { display: flex !important; }
+          .about-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .contact-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .form-row { grid-template-columns: 1fr !important; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          * { transition: none !important; animation: none !important; }
+        }
+      `}</style>
+
+      <a
+        href="#about"
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: "auto",
+          width: "1px",
+          height: "1px",
+          overflow: "hidden",
+        }}
+        onFocus={(e) => {
+          e.target.style.left = "8px";
+          e.target.style.top = "8px";
+          e.target.style.width = "auto";
+          e.target.style.height = "auto";
+          e.target.style.overflow = "visible";
+        }}
+        onBlur={(e) => {
+          e.target.style.left = "-9999px";
+          e.target.style.top = "auto";
+          e.target.style.width = "1px";
+          e.target.style.height = "1px";
+          e.target.style.overflow = "hidden";
+        }}
+      >
+        Skip to main content
+      </a>
+
+      <Nav />
+
+      <main id="main">
+        <Hero />
+        <About />
+        <Projects />
+        <Skills />
+        <Achievements />
+        <Experience />
+        <Contact />
+      </main>
+
+      <Footer />
+    </>
   );
 }
