@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import "./portfolio.css";
 
 // ─── DESIGN SYSTEM ────────────────────────────────────────────────────────────
 const DS = {
@@ -203,66 +204,28 @@ function Icon({ name, size = 16, color = "currentColor", style = {} }) {
 }
 
 // ─── BUTTON ───────────────────────────────────────────────────────────────────
-function Btn({ href, onClick, variant = "outline", children, style = {} }) {
-  const base = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "8px 16px",
-    borderRadius: DS.r8,
-    fontSize: "13px",
-    fontFamily: DS.fontSans,
-    fontWeight: 500,
-    cursor: "pointer",
-    textDecoration: "none",
-    border: "1px solid",
-    transition: "background 0.15s, border-color 0.15s",
-    whiteSpace: "nowrap",
-  };
-  const variants = {
-    primary: {
-      background: DS.accent,
-      borderColor: DS.accent,
-      color: "#fff",
-    },
-    outline: {
-      background: "transparent",
-      borderColor: DS.border,
-      color: DS.text,
-    },
-    ghost: {
-      background: "transparent",
-      border: "none",
-      color: DS.textMuted,
-    },
-  };
-  const merged = { ...base, ...variants[variant], ...style };
-
+function Btn({ href, onClick, variant = "outline", size = "", children }) {
+  const cls = `btn btn--${variant}${size ? ` btn--${size}` : ""}`;
   if (href) {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" style={merged}>
+      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
         {children}
       </a>
     );
   }
   return (
-    <button onClick={onClick} style={merged}>
+    <button onClick={onClick} className={cls}>
       {children}
     </button>
   );
 }
 
 // ─── SECTION WRAPPER ──────────────────────────────────────────────────────────
-function Section({ id, children, style = {} }) {
+function Section({ id, children, hero = false }) {
   return (
     <section
       id={id}
-      style={{
-        maxWidth: "760px",
-        margin: "0 auto",
-        padding: "80px 24px",
-        ...style,
-      }}
+      className={`section${hero ? " section--hero" : ""}`}
     >
       {children}
     </section>
@@ -271,31 +234,9 @@ function Section({ id, children, style = {} }) {
 
 function SectionHeading({ label, title }) {
   return (
-    <div style={{ marginBottom: "40px" }}>
-      <span
-        style={{
-          fontFamily: DS.fontMono,
-          fontSize: "11px",
-          color: DS.accent,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          display: "block",
-          marginBottom: "8px",
-        }}
-      >
-        {label}
-      </span>
-      <h2
-        style={{
-          fontFamily: DS.fontSans,
-          fontSize: "24px",
-          fontWeight: 600,
-          color: DS.text,
-          margin: 0,
-        }}
-      >
-        {title}
-      </h2>
+    <div>
+      <span className="section-label">{label}</span>
+      <h2 className="section-title">{title}</h2>
     </div>
   );
 }
@@ -320,75 +261,23 @@ function Nav() {
     <nav
       role="navigation"
       aria-label="Main navigation"
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
-        background: scrolled ? `rgba(15,15,15,0.92)` : "transparent",
-        backdropFilter: scrolled ? "blur(12px)" : "none",
-        borderBottom: scrolled ? `1px solid ${DS.border}` : "none",
-        transition: "background 0.2s, border 0.2s",
-      }}
+      className={`nav${scrolled ? " nav--scrolled" : ""}`}
     >
-      <div
-        style={{
-          maxWidth: "1100px",
-          margin: "0 auto",
-          padding: "0 24px",
-          height: "56px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        {/* Logo */}
+      <div className="nav__inner">
         <button
           onClick={() => scrollTo("hero")}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: DS.fontMono,
-            fontSize: "14px",
-            color: DS.text,
-            fontWeight: 600,
-            padding: 0,
-          }}
+          className="nav__logo"
           aria-label="Back to top"
         >
           saksham.dev
         </button>
 
-        {/* Desktop links */}
-        <ul
-          role="list"
-          style={{
-            display: "flex",
-            gap: "32px",
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-          }}
-          className="nav-desktop"
-        >
+        <ul role="list" className="nav__links">
           {NAV_ITEMS.map((item) => (
             <li key={item}>
               <button
                 onClick={() => scrollTo(item.toLowerCase())}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: DS.fontSans,
-                  fontSize: "13px",
-                  color: DS.textMuted,
-                  padding: "4px 0",
-                  transition: "color 0.15s",
-                }}
-                onMouseEnter={(e) => (e.target.style.color = DS.text)}
-                onMouseLeave={(e) => (e.target.style.color = DS.textMuted)}
+                className="nav__link-btn"
               >
                 {item}
               </button>
@@ -396,49 +285,24 @@ function Nav() {
           ))}
         </ul>
 
-        {/* Mobile menu toggle */}
         <button
           onClick={() => setOpen((o) => !o)}
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
-          style={{
-            display: "none",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: DS.text,
-          }}
-          className="nav-mobile-btn"
+          className="nav__mobile-toggle"
         >
           <Icon name={open ? "x" : "menu"} size={20} />
         </button>
       </div>
 
-      {/* Mobile drawer */}
       {open && (
-        <div
-          style={{
-            background: DS.surface,
-            borderTop: `1px solid ${DS.border}`,
-            padding: "16px 24px",
-          }}
-        >
-          <ul role="list" style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "4px" }}>
+        <div className="nav__drawer">
+          <ul role="list" className="nav__drawer-list">
             {NAV_ITEMS.map((item) => (
               <li key={item}>
                 <button
                   onClick={() => scrollTo(item.toLowerCase())}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontFamily: DS.fontSans,
-                    fontSize: "15px",
-                    color: DS.text,
-                    padding: "10px 0",
-                    width: "100%",
-                    textAlign: "left",
-                  }}
+                  className="nav__drawer-btn"
                 >
                   {item}
                 </button>
@@ -454,92 +318,22 @@ function Nav() {
 // ─── HERO ─────────────────────────────────────────────────────────────────────
 function Hero() {
   return (
-    <section
-      id="hero"
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        maxWidth: "760px",
-        margin: "0 auto",
-        padding: "120px 24px 80px",
-      }}
-    >
-      {/* Status badge */}
-      <div
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "4px 10px",
-          borderRadius: "99px",
-          border: `1px solid ${DS.border}`,
-          background: DS.surface,
-          marginBottom: "32px",
-          width: "fit-content",
-        }}
-      >
-        <span
-          style={{
-            width: "6px",
-            height: "6px",
-            borderRadius: "50%",
-            background: "#22c55e",
-            flexShrink: 0,
-          }}
-          aria-hidden="true"
-        />
-        <span style={{ fontFamily: DS.fontMono, fontSize: "11px", color: DS.textMuted }}>
-          Open to internships
-        </span>
+    <Section id="hero" hero>
+      <div className="hero__badge" aria-label="Availability status">
+        <span className="hero__badge-dot" aria-hidden="true" />
+        <span className="hero__badge-text">Open to internships</span>
       </div>
 
-      {/* Name */}
-      <h1
-        style={{
-          fontFamily: DS.fontSans,
-          fontSize: "clamp(36px, 6vw, 56px)",
-          fontWeight: 700,
-          color: DS.text,
-          margin: "0 0 8px",
-          lineHeight: 1.1,
-          letterSpacing: "-0.02em",
-        }}
-      >
-        Saksham Tripathi
-      </h1>
+      <h1 className="hero__name">Saksham Tripathi</h1>
 
-      {/* Title */}
-      <p
-        style={{
-          fontFamily: DS.fontSans,
-          fontSize: "clamp(18px, 3vw, 22px)",
-          fontWeight: 400,
-          color: DS.accent,
-          margin: "0 0 20px",
-        }}
-      >
-        Backend-Focused Full Stack Engineer
-      </p>
+      <p className="hero__title">Backend-Focused Full Stack Engineer</p>
 
-      {/* One-line value prop */}
-      <p
-        style={{
-          fontFamily: DS.fontSans,
-          fontSize: "16px",
-          color: DS.textMuted,
-          lineHeight: 1.7,
-          maxWidth: "560px",
-          margin: "0 0 40px",
-        }}
-      >
+      <p className="hero__desc">
         Building scalable web applications with Node.js, React, MongoDB, Socket.IO, and WebRTC.
         First-year B.Tech CSE — Prodigy InfoTech intern — Top 2% on LeetCode.
       </p>
 
-      {/* CTAs */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
+      <div className="hero__ctas">
         <Btn href="/Saksham_Instep_Resume.pdf" variant="primary">
           View Resume
           <Icon name="external" size={14} />
@@ -557,7 +351,7 @@ function Hero() {
           LeetCode
         </Btn>
       </div>
-    </section>
+    </Section>
   );
 }
 
@@ -1166,7 +960,7 @@ function Contact() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {[
-              { icon: "mail", label: "shivbhau2108@gmail.com", href: "mailto:shivbhau2108@gmail.com" },
+              { icon: "mail", label: "sakshamtripathi021@gmail.com", href: "mailto:sakshamtripathi021@gmail.com" },
               { icon: "linkedin", label: "saksham-tripathi-7b25b0330", href: "https://linkedin.com/in/saksham-tripathi-7b25b0330" },
               { icon: "github", label: "Saksham-Xtreme", href: "https://github.com/Saksham-Xtreme" },
               { icon: "leetcode", label: "sakshamtechie", href: "https://leetcode.com/u/sakshamtechie/" },
@@ -1339,51 +1133,8 @@ function Footer() {
 export default function Portfolio() {
   return (
     <>
-      {/* Global reset & responsive styles injected inline */}
-      <style>{`
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-        body { background: ${DS.bg}; color: ${DS.text}; }
-        :focus-visible { outline: 2px solid ${DS.accent}; outline-offset: 2px; }
-
-        @media (max-width: 640px) {
-          .nav-desktop { display: none !important; }
-          .nav-mobile-btn { display: flex !important; }
-          .about-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
-          .contact-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
-          .form-row { grid-template-columns: 1fr !important; }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          * { transition: none !important; animation: none !important; }
-        }
-      `}</style>
-
-      <a
-        href="#about"
-        style={{
-          position: "absolute",
-          left: "-9999px",
-          top: "auto",
-          width: "1px",
-          height: "1px",
-          overflow: "hidden",
-        }}
-        onFocus={(e) => {
-          e.target.style.left = "8px";
-          e.target.style.top = "8px";
-          e.target.style.width = "auto";
-          e.target.style.height = "auto";
-          e.target.style.overflow = "visible";
-        }}
-        onBlur={(e) => {
-          e.target.style.left = "-9999px";
-          e.target.style.top = "auto";
-          e.target.style.width = "1px";
-          e.target.style.height = "1px";
-          e.target.style.overflow = "hidden";
-        }}
-      >
+      {/* Skip to main content — styled via portfolio.css .skip-link */}
+      <a href="#main" className="skip-link">
         Skip to main content
       </a>
 
