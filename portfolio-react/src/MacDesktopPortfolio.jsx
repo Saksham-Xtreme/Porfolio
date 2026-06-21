@@ -960,7 +960,7 @@ function Contact() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {[
-              { icon: "mail", label: "shivbhau2108@gmail.com", href: "mailto:sakshamtripathi021@gmail.com" },
+              { icon: "mail", label: "sakshamtripathi021@gmail.com", href: "mailto:sakshamtripathi021@gmail.com" },
               { icon: "linkedin", label: "saksham-tripathi-7b25b0330", href: "https://linkedin.com/in/saksham-tripathi-7b25b0330" },
               { icon: "github", label: "Saksham-Xtreme", href: "https://github.com/Saksham-Xtreme" },
               { icon: "leetcode", label: "sakshamtechie", href: "https://leetcode.com/u/sakshamtechie/" },
