@@ -1347,3 +1347,47 @@
     .section-label  { color: #555; }
     .section-title  { color: #000; }
   }
+  
+  
+  /* ═══════════════════════════════════════════════════════════════════════════════
+     18. ADDITIONS — classes used by JSX not in original CSS
+     ═══════════════════════════════════════════════════════════════════════════════ */
+  
+  /* Hero role line (was .hero__title — renamed for clarity) */
+  .hero__role {
+    font-family: var(--font-sans);
+    font-size: var(--t-22);
+    font-weight: 400;
+    color: var(--accent);
+    margin: 0 0 var(--sp-20);
+    letter-spacing: -0.01em;
+  }
+  
+  /* Icon colour utilities */
+  .icon--accent {
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  
+  .icon--green {
+    color: var(--green);
+    flex-shrink: 0;
+  }
+  
+  /* Shared svg reset (all icons get this via the className prop) */
+  .icon {
+    display: block;
+    flex-shrink: 0;
+  }
+  
+  /* project-card spacing block (wraps Problem label + text) */
+  .project-card__block {
+    margin-bottom: var(--sp-16);
+  }
+  
+  /* chip-row without bottom margin (skills section doesn't need it) */
+  .chip-row--wrap {
+    margin-bottom: 0;
+  }
+  
+  /* card-label--green already defined above; confirm it also covers impact-box label */
